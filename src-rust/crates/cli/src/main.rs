@@ -33,7 +33,7 @@ pub const ISSUES_EXPLAINER: &str = env!("ISSUES_EXPLAINER");
 use anyhow::Context;
 use claurst_core::{
     config::{Config, PermissionMode, Settings},
-    constants::{APP_VERSION, DEFAULT_MODEL},
+    constants::APP_VERSION,
     context::ContextBuilder,
     cost::CostTracker,
     permissions::{AutoPermissionHandler, InteractivePermissionHandler},
@@ -121,8 +121,8 @@ struct Cli {
     print: bool,
 
     /// Model to use
-    #[arg(short = 'm', long = "model", default_value = DEFAULT_MODEL)]
-    model: String,
+    #[arg(short = 'm', long = "model")]
+    model: Option<String>,
 
     /// Permission mode
     #[arg(long = "permission-mode", value_enum, default_value_t = CliPermissionMode::Default)]
@@ -454,7 +454,9 @@ async fn main() -> anyhow::Result<()> {
     if let Some(ref key) = cli.api_key {
         config.api_key = Some(key.clone());
     }
-    config.model = Some(cli.model.clone());
+    if let Some(ref m) = cli.model {
+        config.model = Some(m.clone());
+    }
     if let Some(mt) = cli.max_tokens {
         config.max_tokens = Some(mt);
     }
@@ -789,6 +791,8 @@ async fn main() -> anyhow::Result<()> {
         )
         .await
     } else {
+        let has_credentials = !api_key.is_empty()
+            || config.provider.as_deref().is_some_and(|p| p != "anthropic");
         run_interactive(
             config,
             settings,
@@ -799,7 +803,7 @@ async fn main() -> anyhow::Result<()> {
             cost_tracker,
             cli.resume,
             bridge_config,
-            !api_key.is_empty(),
+            has_credentials,
             model_registry,
         )
         .await
