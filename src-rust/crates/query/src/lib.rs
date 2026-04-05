@@ -925,9 +925,39 @@ pub async fn run_query_loop(
 
             if provider_id_str != "anthropic" {
                 let pid = claurst_core::provider_id::ProviderId::new(&provider_id_str);
+
                 // Try registry first; if not found, build provider dynamically
                 // from auth_store (handles keys added at runtime via /connect).
-                let registry_provider = registry.get(&pid).cloned();
+                let mut registry_provider = registry.get(&pid).cloned();
+
+                // If the user supplied --api-base for a local provider (Ollama, LM Studio,
+                // llama.cpp), rebuild the provider with the override URL.  These providers
+                // are always pre-registered with a hardcoded default URL, so without this
+                // the --api-base flag would be silently ignored.
+                if let Some(override_base) = tool_ctx.config.provider_configs
+                    .get(&provider_id_str)
+                    .and_then(|pc| pc.api_base.as_deref())
+                {
+                    use claurst_api::providers::openai_compat_providers;
+                    let base_url = format!("{}/v1", override_base.trim_end_matches('/'));
+                    let overridden: Option<std::sync::Arc<dyn claurst_api::LlmProvider>> =
+                        match provider_id_str.as_str() {
+                            "ollama" => Some(std::sync::Arc::new(
+                                openai_compat_providers::ollama().with_base_url(base_url),
+                            )),
+                            "lmstudio" | "lm-studio" => Some(std::sync::Arc::new(
+                                openai_compat_providers::lm_studio().with_base_url(base_url),
+                            )),
+                            "llamacpp" | "llama-cpp" => Some(std::sync::Arc::new(
+                                openai_compat_providers::llama_cpp().with_base_url(base_url),
+                            )),
+                            _ => None,
+                        };
+                    if overridden.is_some() {
+                        registry_provider = overridden;
+                    }
+                }
+
                 let dynamic_provider: Option<std::sync::Arc<dyn claurst_api::LlmProvider>> = if registry_provider.is_none() {
                     let auth_store = claurst_core::AuthStore::load();
                     if let Some(key) = auth_store.api_key_for(&provider_id_str) {

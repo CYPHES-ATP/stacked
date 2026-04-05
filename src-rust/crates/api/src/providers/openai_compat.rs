@@ -125,6 +125,12 @@ impl OpenAiCompatProvider {
         self
     }
 
+    /// Override the base URL (e.g. from a user-supplied --api-base flag).
+    pub fn with_base_url(mut self, base_url: impl Into<String>) -> Self {
+        self.base_url = base_url.into();
+        self
+    }
+
     // -----------------------------------------------------------------------
     // Internal helpers
     // -----------------------------------------------------------------------
