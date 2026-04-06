@@ -1179,7 +1179,12 @@ pub async fn run_query_loop(
                         }
                     }).collect();
 
-                    if !tool_use_blocks.is_empty() && stop_str == "tool_use" {
+                    // Execute tools if any tool_use blocks were returned.
+                    // Note: we check the blocks themselves rather than relying
+                    // solely on stop_str == "tool_use" because many OpenAI-
+                    // compatible providers (Ollama, LM Studio, etc.) return
+                    // finish_reason "stop" even when tool calls are present.
+                    if !tool_use_blocks.is_empty() {
                         let mut tool_results = Vec::new();
                         for (tool_id, tool_name, tool_input) in tool_use_blocks {
                             let result = execute_tool(&*tool_name, &tool_input, tools, &tool_ctx).await;
