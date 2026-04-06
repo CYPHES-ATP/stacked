@@ -767,6 +767,8 @@ pub struct App {
     pub auto_compact_enabled: bool,
     /// Context threshold (0-100) at which to auto-compact.
     pub auto_compact_threshold: u8,
+    /// Guard to prevent re-triggering auto-compact while one is in flight.
+    pub auto_compact_running: bool,
 
     // ---- Voice hold-to-talk ------------------------------------------------
 
@@ -1081,6 +1083,7 @@ impl App {
             status_line_override: None,
             auto_compact_enabled: false,
             auto_compact_threshold: 95,
+            auto_compact_running: false,
             voice_recorder: {
                 // Check whether voice input has been enabled via the /voice command
                 // (stored in ~/.claurst/ui-settings.json).  We also accept
@@ -1378,6 +1381,8 @@ impl App {
         let model = self.display_default_model_for_provider(&provider_id);
         self.cost_tracker.set_model(&model);
         self.model_name = model;
+        self.refresh_context_window_size();
+        self.context_used_tokens = 0;
     }
 
     /// Cycle to the next agent mode: build → plan → explore → build.
@@ -1404,6 +1409,25 @@ impl App {
         self.status_message = Some(format!("Switched to {} mode.", label));
     }
 
+    /// Update the context window size from the model registry for the current model.
+    pub fn refresh_context_window_size(&mut self) {
+        let provider = self.config.provider.as_deref().unwrap_or("anthropic");
+        let model_id = self.model_name
+            .strip_prefix(&format!("{}/", provider))
+            .unwrap_or(&self.model_name);
+        if let Some(entry) = self.model_registry.get(provider, model_id) {
+            self.context_window_size = entry.info.context_window as u64;
+        } else {
+            // Fallback: common defaults
+            self.context_window_size = match provider {
+                "anthropic" => 200_000,
+                "openai" => 128_000,
+                "google" => 1_048_576,
+                _ => 128_000,
+            };
+        }
+    }
+
     /// Update the active model name (also updates config + cost tracker).
     pub fn set_model(&mut self, model: String) {
         self.cost_tracker.set_model(&model);
@@ -1412,6 +1436,9 @@ impl App {
         if let Some(provider) = Self::infer_provider_from_model(&model) {
             self.config.provider = Some(provider);
         }
+        self.refresh_context_window_size();
+        // Reset used tokens when switching models (context is fresh).
+        self.context_used_tokens = 0;
     }
 
     /// Apply a theme by name, persisting it to config.
@@ -4609,10 +4636,17 @@ impl App {
                 self.refresh_turn_diff_from_history();
             }
 
-            QueryEvent::TurnComplete { turn, stop_reason, .. } => {
+            QueryEvent::TurnComplete { turn, stop_reason, usage, .. } => {
                 debug!(turn, stop_reason, "Turn complete");
                 self.is_streaming = false;
                 self.spinner_verb = None;
+
+                // Update context window usage from the usage info.
+                if let Some(ref u) = usage {
+                    let turn_tokens = u.input_tokens + u.output_tokens
+                        + u.cache_creation_input_tokens + u.cache_read_input_tokens;
+                    self.context_used_tokens = self.context_used_tokens.saturating_add(turn_tokens);
+                }
                 // Record elapsed time and pick a completion verb
                 let seed = self.frame_count as usize ^ (self.messages.len() * 7);
                 let elapsed = self.turn_start.take()

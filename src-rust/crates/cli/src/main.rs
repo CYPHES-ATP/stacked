@@ -1344,6 +1344,8 @@ async fn run_interactive(
         };
     }
     app.provider_registry = base_query_config.provider_registry.clone();
+    app.refresh_context_window_size();
+    app.auto_compact_enabled = live_config.auto_compact;
 
     // Background: refresh the model registry from models.dev.
     // The fetched JSON is saved as a cache file; the App will reload it from
@@ -2204,6 +2206,67 @@ async fn run_interactive(
             app.handle_query_event(evt);
         }
 
+        // Auto-compact: when context usage hits 99% and no query is running,
+        // automatically submit a compact request.
+        if app.context_window_size > 0
+            && !app.is_streaming
+            && current_query.is_none()
+            && !app.auto_compact_running
+        {
+            let used_pct = (app.context_used_tokens as f64 / app.context_window_size as f64 * 100.0) as u64;
+            if used_pct >= 99 {
+                app.auto_compact_running = true;
+                let msg_count = messages.len();
+                let compact_msg = format!(
+                    "[Auto-compact triggered ({} messages, {}% context used). \
+                     Provide a detailed summary of our conversation so far, \
+                     preserving all key technical details, decisions made, \
+                     file paths mentioned, and current task status.]",
+                    msg_count, used_pct
+                );
+                app.status_message = Some("Context 99% full — auto-compacting…".to_string());
+                let user_msg = claurst_core::types::Message::user(compact_msg);
+                messages.push(user_msg.clone());
+                app.push_message(user_msg);
+                session.messages = messages.clone();
+                session.updated_at = chrono::Utc::now();
+
+                // Dispatch the compact query immediately.
+                let ct = CancellationToken::new();
+                cancel = Some(ct.clone());
+                let msgs_arc = Arc::new(tokio::sync::Mutex::new(messages.clone()));
+                let msgs_arc_clone = msgs_arc.clone();
+                let tools_arc_clone = tools_arc.clone();
+                let ctx_clone = tool_ctx.clone();
+                let mut qcfg = base_query_config.clone();
+                qcfg.model = claurst_api::effective_model_for_config(&cmd_ctx.config, &model_registry);
+                qcfg.max_tokens = cmd_ctx.config.effective_max_tokens();
+                let tracker = cost_tracker.clone();
+                let tx = event_tx.clone();
+                let client_clone = client.clone();
+                app.is_streaming = true;
+
+                let handle = tokio::spawn(async move {
+                    let mut msgs = msgs_arc_clone.lock().await.clone();
+                    let outcome = claurst_query::run_query_loop(
+                        client_clone.as_ref(),
+                        &mut msgs,
+                        tools_arc_clone.as_slice(),
+                        &ctx_clone,
+                        &qcfg,
+                        tracker,
+                        Some(tx),
+                        ct,
+                        None,
+                    )
+                    .await;
+                    *msgs_arc_clone.lock().await = msgs;
+                    outcome
+                });
+                current_query = Some((handle, msgs_arc));
+            }
+        }
+
         // Drain TUI-facing bridge events.
         let mut disconnect_bridge = false;
         if let Some(runtime) = bridge_runtime.as_mut() {
@@ -2602,6 +2665,12 @@ async fn run_interactive(
                 session.working_dir = Some(tool_ctx.working_dir.display().to_string());
                 app.is_streaming = false;
                 app.status_message = None;
+                if app.auto_compact_running {
+                    app.auto_compact_running = false;
+                    // After auto-compact the context was summarised — reset usage.
+                    app.context_used_tokens = 0;
+                    app.status_message = Some("Auto-compact complete.".to_string());
+                }
 
                 // Save session to JSONL (primary storage)
                 let _ = claurst_core::history::save_session(&session).await;
