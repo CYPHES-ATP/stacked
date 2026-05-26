@@ -1,10 +1,10 @@
 [package]
-name = "claurst-api"
+name = "cyphes-api"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-claurst-core = { workspace = true }
+cyphes-core = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
 futures = { workspace = true }

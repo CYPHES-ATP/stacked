@@ -1,59 +1,59 @@
 [package]
-name = "claurst-tui"
+name = "cyphes-tui"
 version.workspace = true
 edition.workspace = true
 
 [features]
 # Enable real microphone capture for voice PTT mode.
-voice = ["claurst-core/voice", "dep:cpal", "dep:hound"]
+voice = ["cyphes-core/voice", "dep:cpal", "dep:hound"]
 
 # UI & Interaction features (pass-through from cc-core)
-token_budget = ["claurst-core/token_budget"]
-ultraplan = ["claurst-core/ultraplan"]
-ultrathink = ["claurst-core/ultrathink"]
-history_picker = ["claurst-core/history_picker"]
-message_actions = ["claurst-core/message_actions"]
-quick_search = ["claurst-core/quick_search"]
-away_summary = ["claurst-core/away_summary"]
-hook_prompts = ["claurst-core/hook_prompts"]
-kairos_brief = ["claurst-core/kairos_brief"]
-kairos_channels = ["claurst-core/kairos_channels"]
-lodestone = ["claurst-core/lodestone"]
+token_budget = ["cyphes-core/token_budget"]
+ultraplan = ["cyphes-core/ultraplan"]
+ultrathink = ["cyphes-core/ultrathink"]
+history_picker = ["cyphes-core/history_picker"]
+message_actions = ["cyphes-core/message_actions"]
+quick_search = ["cyphes-core/quick_search"]
+away_summary = ["cyphes-core/away_summary"]
+hook_prompts = ["cyphes-core/hook_prompts"]
+kairos_brief = ["cyphes-core/kairos_brief"]
+kairos_channels = ["cyphes-core/kairos_channels"]
+lodestone = ["cyphes-core/lodestone"]
 
 # Agents & Memory features (pass-through from cc-core)
-agent_triggers = ["claurst-core/agent_triggers"]
-agent_triggers_remote = ["claurst-core/agent_triggers_remote"]
-extract_memories = ["claurst-core/extract_memories"]
-verification_agent = ["claurst-core/verification_agent"]
-builtin_explore_plan_agents = ["claurst-core/builtin_explore_plan_agents"]
-cached_microcompact = ["claurst-core/cached_microcompact"]
-compaction_reminders = ["claurst-core/compaction_reminders"]
-agent_memory_snapshot = ["claurst-core/agent_memory_snapshot"]
-teammem = ["claurst-core/teammem"]
+agent_triggers = ["cyphes-core/agent_triggers"]
+agent_triggers_remote = ["cyphes-core/agent_triggers_remote"]
+extract_memories = ["cyphes-core/extract_memories"]
+verification_agent = ["cyphes-core/verification_agent"]
+builtin_explore_plan_agents = ["cyphes-core/builtin_explore_plan_agents"]
+cached_microcompact = ["cyphes-core/cached_microcompact"]
+compaction_reminders = ["cyphes-core/compaction_reminders"]
+agent_memory_snapshot = ["cyphes-core/agent_memory_snapshot"]
+teammem = ["cyphes-core/teammem"]
 
 # Tools & Infrastructure features (pass-through from cc-core)
-bash_classifier = ["claurst-core/bash_classifier"]
-bridge_mode = ["claurst-core/bridge_mode"]
-mcp_rich_output = ["claurst-core/mcp_rich_output"]
-connector_text = ["claurst-core/connector_text"]
-unattended_retry = ["claurst-core/unattended_retry"]
-new_init = ["claurst-core/new_init"]
-powershell_auto_mode = ["claurst-core/powershell_auto_mode"]
-shot_stats = ["claurst-core/shot_stats"]
-tree_sitter_bash = ["claurst-core/tree_sitter_bash"]
-tree_sitter_bash_shadow = ["claurst-core/tree_sitter_bash_shadow"]
-native_clipboard_image = ["claurst-core/native_clipboard_image"]
-prompt_cache_break_detection = ["claurst-core/prompt_cache_break_detection"]
-ccr_auto_connect = ["claurst-core/ccr_auto_connect"]
-ccr_mirror = ["claurst-core/ccr_mirror"]
-ccr_remote_setup = ["claurst-core/ccr_remote_setup"]
+bash_classifier = ["cyphes-core/bash_classifier"]
+bridge_mode = ["cyphes-core/bridge_mode"]
+mcp_rich_output = ["cyphes-core/mcp_rich_output"]
+connector_text = ["cyphes-core/connector_text"]
+unattended_retry = ["cyphes-core/unattended_retry"]
+new_init = ["cyphes-core/new_init"]
+powershell_auto_mode = ["cyphes-core/powershell_auto_mode"]
+shot_stats = ["cyphes-core/shot_stats"]
+tree_sitter_bash = ["cyphes-core/tree_sitter_bash"]
+tree_sitter_bash_shadow = ["cyphes-core/tree_sitter_bash_shadow"]
+native_clipboard_image = ["cyphes-core/native_clipboard_image"]
+prompt_cache_break_detection = ["cyphes-core/prompt_cache_break_detection"]
+ccr_auto_connect = ["cyphes-core/ccr_auto_connect"]
+ccr_mirror = ["cyphes-core/ccr_mirror"]
+ccr_remote_setup = ["cyphes-core/ccr_remote_setup"]
 
 [dependencies]
-claurst-core = { workspace = true }
-claurst-api = { workspace = true }
-claurst-tools = { workspace = true }
-claurst-query = { workspace = true }
-claurst-mcp = { workspace = true }
+cyphes-core = { workspace = true }
+cyphes-api = { workspace = true }
+cyphes-tools = { workspace = true }
+cyphes-query = { workspace = true }
+cyphes-mcp = { workspace = true }
 tokio = { workspace = true }
 futures = { workspace = true }
 serde = { workspace = true }

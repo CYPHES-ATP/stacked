@@ -1,4 +1,4 @@
-//! `session/prompt` handler — drives the Claurst query loop and forwards
+//! `session/prompt` handler — drives the CYPHES query loop and forwards
 //! every meaningful event back to the ACP client as a `session/update`
 //! notification.
 
@@ -6,10 +6,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use agent_client_protocol_schema as acp;
-use claurst_api::streaming::{AnthropicStreamEvent, ContentDelta};
-use claurst_core::types::Message;
-use claurst_query::{QueryEvent, QueryOutcome};
-use claurst_tools::ToolContext;
+use cyphes_api::streaming::{AnthropicStreamEvent, ContentDelta};
+use cyphes_core::types::Message;
+use cyphes_query::{QueryEvent, QueryOutcome};
+use cyphes_tools::ToolContext;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, warn};
@@ -21,7 +21,7 @@ use crate::sessions::SessionState;
 
 /// Handle one `session/prompt` JSON-RPC call.
 ///
-/// Drives the full Claurst query loop with the runtime's tools, MCP servers,
+/// Drives the full CYPHES query loop with the runtime's tools, MCP servers,
 /// and provider registry, while streaming every text delta, thinking delta,
 /// and tool invocation back as `session/update` notifications. Returns the
 /// final `PromptResponse` with the appropriate `StopReason`.
@@ -31,7 +31,7 @@ pub async fn handle(
     session: Arc<SessionState>,
     params: acp::PromptRequest,
 ) -> Result<acp::PromptResponse, acp::Error> {
-    // Convert prompt content blocks → a single user message in Claurst's
+    // Convert prompt content blocks → a single user message in CYPHES's
     // internal format.
     let user_text = render_prompt_blocks(&params.prompt);
     if user_text.trim().is_empty() {
@@ -49,7 +49,7 @@ pub async fn handle(
     let cancel = session.cancel_token.clone();
 
     // Build per-session ToolContext.
-    let permission_handler: Arc<dyn claurst_core::PermissionHandler> =
+    let permission_handler: Arc<dyn cyphes_core::PermissionHandler> =
         Arc::new(AcpPermissionHandler);
     let tool_ctx = ToolContext {
         working_dir: session.cwd.clone(),
@@ -87,7 +87,7 @@ pub async fn handle(
     ));
 
     // Run the query loop.
-    let outcome = claurst_query::run_query_loop(
+    let outcome = cyphes_query::run_query_loop(
         runtime.api_client.as_ref(),
         &mut messages,
         runtime.tools.as_slice(),

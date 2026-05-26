@@ -1,17 +1,17 @@
-//! Agent Client Protocol (ACP) server for Claurst.
+//! Agent Client Protocol (ACP) server for CYPHES.
 //!
 //! ACP is the open protocol pioneered by Zed for standardizing communication
 //! between AI coding agents and editors (Zed, Neovim, JetBrains, VS Code, …).
 //! Spec: <https://agentclientprotocol.com>
 //!
-//! This crate turns the local `claurst` binary into a compliant ACP agent
-//! over newline-delimited JSON-RPC 2.0 on stdio. Editors launch `claurst acp`
+//! This crate turns the local `cyphes` binary into a compliant ACP agent
+//! over newline-delimited JSON-RPC 2.0 on stdio. Editors launch `cyphes acp`
 //! as a subprocess and drive it through the protocol's standard methods:
 //!
 //! | Method                       | Direction  | Notes                                       |
 //! |------------------------------|------------|---------------------------------------------|
 //! | `initialize`                 | C → A      | Capability negotiation                      |
-//! | `authenticate`               | C → A      | No-op (Claurst uses local credentials)      |
+//! | `authenticate`               | C → A      | No-op (CYPHES uses local credentials)      |
 //! | `session/new`                | C → A      | Create a session with cwd + MCP roster      |
 //! | `session/prompt`             | C → A      | Run a turn; streams `session/update` events |
 //! | `session/cancel`             | C → A (no resp) | Cancel an in-flight prompt             |
@@ -84,7 +84,7 @@ fn install_stderr_tracing() {
     use tracing_subscriber::{fmt, EnvFilter};
     let _ = fmt()
         .with_env_filter(
-            EnvFilter::try_from_env("CLAURST_ACP_LOG").unwrap_or_else(|_| EnvFilter::new("warn")),
+            EnvFilter::try_from_env("CYPHES_ACP_LOG").unwrap_or_else(|_| EnvFilter::new("warn")),
         )
         .with_writer(std::io::stderr)
         .try_init();

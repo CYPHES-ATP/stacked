@@ -1,6 +1,6 @@
 # Security Policy
 
-Stacked is an agentic coding environment. Treat every tool execution, file edit, shell command, network request, credential flow, and model-provider integration as security-sensitive.
+CYPHES is an agentic coding environment. Treat every tool execution, file edit, shell command, network request, credential flow, and model-provider integration as security-sensitive.
 
 ## Supported Versions
 

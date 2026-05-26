@@ -1,4 +1,4 @@
-//! Named commands (e.g. `claurst agents`, `claurst ide`, `claurst branch`, …).
+//! Named commands (e.g. `cyphes agents`, `cyphes ide`, `cyphes branch`, …).
 //!
 //! These complement slash commands with more complex top-level flows.
 //! A named command is invoked when the *first* CLI argument matches one
@@ -23,15 +23,15 @@ use crate::{CommandContext, CommandResult};
 // Trait
 // ---------------------------------------------------------------------------
 
-/// A top-level named command (`claurst <name> [args…]`).
+/// A top-level named command (`cyphes <name> [args…]`).
 pub trait NamedCommand: Send + Sync {
     /// Primary command name, e.g. `"agents"`.
     fn name(&self) -> &str;
 
-    /// One-line description used in `claurst --help`.
+    /// One-line description used in `cyphes --help`.
     fn description(&self) -> &str;
 
-    /// Usage hint shown in `claurst <name> --help`.
+    /// Usage hint shown in `cyphes <name> --help`.
     fn usage(&self) -> &str;
 
     /// Execute the command.  `args` is the slice of arguments *after* the
@@ -48,20 +48,20 @@ pub struct AgentsCommand;
 impl NamedCommand for AgentsCommand {
     fn name(&self) -> &str { "agents" }
     fn description(&self) -> &str { "Manage and configure sub-agents" }
-    fn usage(&self) -> &str { "claurst agents [list|create|edit|delete] [name]" }
+    fn usage(&self) -> &str { "cyphes agents [list|create|edit|delete] [name]" }
 
     fn execute_named(&self, args: &[&str], ctx: &CommandContext) -> CommandResult {
         match args.first().copied().unwrap_or("list") {
             "list" => {
-                // Load agent definitions from .claurst/agents/ in working dir
+                // Load agent definitions from .cyphes/agents/ in working dir
                 // (and home dir), using the same loader as the TUI agents view.
-                let defs = claurst_tui::agents_view::load_agent_definitions(&ctx.working_dir);
+                let defs = cyphes_tui::agents_view::load_agent_definitions(&ctx.working_dir);
 
                 if defs.is_empty() {
                     return CommandResult::Message(
                         "Available Agents (0)\n\n\
                          No custom agents defined. Create one with /new-agent\n\
-                         or run: claurst agents create <name>"
+                         or run: cyphes agents create <name>"
                             .to_string(),
                     );
                 }
@@ -81,13 +81,13 @@ impl NamedCommand for AgentsCommand {
                         ));
                     }
                 }
-                out.push_str("\nUse 'claurst agents create <name>' to add a new agent.");
+                out.push_str("\nUse 'cyphes agents create <name>' to add a new agent.");
                 CommandResult::Message(out)
             }
             "create" => {
                 let name = args.get(1).copied().unwrap_or("my-agent");
                 CommandResult::Message(format!(
-                    "Create a new agent by adding .claurst/agents/{name}.md\n\
+                    "Create a new agent by adding .cyphes/agents/{name}.md\n\
                      Template:\n\
                      ---\n\
                      name: {name}\n\
@@ -101,22 +101,22 @@ impl NamedCommand for AgentsCommand {
                 let name = match args.get(1).copied() {
                     Some(n) => n,
                     None => return CommandResult::Error(
-                        "Usage: claurst agents edit <name>".to_string(),
+                        "Usage: cyphes agents edit <name>".to_string(),
                     ),
                 };
                 CommandResult::Message(format!(
-                    "Edit .claurst/agents/{name}.md in your editor to update the agent."
+                    "Edit .cyphes/agents/{name}.md in your editor to update the agent."
                 ))
             }
             "delete" => {
                 let name = match args.get(1).copied() {
                     Some(n) => n,
                     None => return CommandResult::Error(
-                        "Usage: claurst agents delete <name>".to_string(),
+                        "Usage: cyphes agents delete <name>".to_string(),
                     ),
                 };
                 CommandResult::Message(format!(
-                    "Delete .claurst/agents/{name}.md to remove the agent."
+                    "Delete .cyphes/agents/{name}.md to remove the agent."
                 ))
             }
             sub => CommandResult::Error(format!("Unknown agents subcommand: '{sub}'")),
@@ -132,13 +132,13 @@ pub struct AddDirCommand;
 
 impl NamedCommand for AddDirCommand {
     fn name(&self) -> &str { "add-dir" }
-    fn description(&self) -> &str { "Add a directory to Claurst's allowed workspace paths" }
-    fn usage(&self) -> &str { "claurst add-dir <path>" }
+    fn description(&self) -> &str { "Add a directory to CYPHES's allowed workspace paths" }
+    fn usage(&self) -> &str { "cyphes add-dir <path>" }
 
     fn execute_named(&self, args: &[&str], _ctx: &CommandContext) -> CommandResult {
         let raw = match args.first() {
             Some(p) => *p,
-            None => return CommandResult::Error("Usage: claurst add-dir <path>".to_string()),
+            None => return CommandResult::Error("Usage: cyphes add-dir <path>".to_string()),
         };
 
         let path = std::path::Path::new(raw);
@@ -156,7 +156,7 @@ impl NamedCommand for AddDirCommand {
             Err(e) => return CommandResult::Error(format!("Cannot resolve path: {e}")),
         };
 
-        let mut settings = match claurst_core::config::Settings::load_sync() {
+        let mut settings = match cyphes_core::config::Settings::load_sync() {
             Ok(s) => s,
             Err(e) => {
                 return CommandResult::Error(format!(
@@ -192,7 +192,7 @@ pub struct BranchCommand;
 impl NamedCommand for BranchCommand {
     fn name(&self) -> &str { "branch" }
     fn description(&self) -> &str { "Create a branch of the current conversation at this point" }
-    fn usage(&self) -> &str { "claurst branch [create|list|switch] [name|id]" }
+    fn usage(&self) -> &str { "cyphes branch [create|list|switch] [name|id]" }
 
     fn execute_named(&self, args: &[&str], ctx: &CommandContext) -> CommandResult {
         match args.first().copied().unwrap_or("") {
@@ -216,7 +216,7 @@ impl NamedCommand for BranchCommand {
 
                 let result = tokio::task::block_in_place(|| {
                     tokio::runtime::Handle::current().block_on(async move {
-                        claurst_core::history::branch_session(
+                        cyphes_core::history::branch_session(
                             &session_id,
                             msg_count,
                             title_opt.as_deref(),
@@ -230,7 +230,7 @@ impl NamedCommand for BranchCommand {
                         let title = new_session.title.as_deref().unwrap_or("(untitled)");
                         CommandResult::Message(format!(
                             "Created branch: \"{title}\"\nNew session ID: {}\n\
-                             To resume original: claurst -r{}\n\
+                             To resume original: cyphes -r{}\n\
                              To switch to branch: /branch switch {}",
                             new_session.id,
                             ctx.session_id,
@@ -245,7 +245,7 @@ impl NamedCommand for BranchCommand {
 
                 let sessions = tokio::task::block_in_place(|| {
                     tokio::runtime::Handle::current()
-                        .block_on(claurst_core::history::list_sessions())
+                        .block_on(cyphes_core::history::list_sessions())
                 });
 
                 let branches: Vec<_> = sessions
@@ -273,7 +273,7 @@ impl NamedCommand for BranchCommand {
                             b.title.as_deref().unwrap_or("(untitled)")
                         ));
                     }
-                    out.push_str("\nUse: claurst branch switch <id>");
+                    out.push_str("\nUse: cyphes branch switch <id>");
                     CommandResult::Message(out)
                 }
             }
@@ -282,14 +282,14 @@ impl NamedCommand for BranchCommand {
                     Some(i) if !i.is_empty() => i.to_string(),
                     _ => {
                         return CommandResult::Error(
-                            "Usage: claurst branch switch <session-id>".to_string(),
+                            "Usage: cyphes branch switch <session-id>".to_string(),
                         )
                     }
                 };
 
                 let result = tokio::task::block_in_place(|| {
                     tokio::runtime::Handle::current()
-                        .block_on(claurst_core::history::load_session(&id))
+                        .block_on(cyphes_core::history::load_session(&id))
                 });
 
                 match result {
@@ -297,7 +297,7 @@ impl NamedCommand for BranchCommand {
                     Err(e) => CommandResult::Error(format!("Could not load session '{id}': {e}")),
                 }
             }
-            sub => CommandResult::Error(format!("Unknown branch subcommand: '{sub}'\nUsage: claurst branch [create|list|switch] [name|id]")),
+            sub => CommandResult::Error(format!("Unknown branch subcommand: '{sub}'\nUsage: cyphes branch [create|list|switch] [name|id]")),
         }
     }
 }
@@ -311,7 +311,7 @@ pub struct TagCommand;
 impl NamedCommand for TagCommand {
     fn name(&self) -> &str { "tag" }
     fn description(&self) -> &str { "Toggle a searchable tag on the current session" }
-    fn usage(&self) -> &str { "claurst tag [list|add|remove|toggle] [tag]" }
+    fn usage(&self) -> &str { "cyphes tag [list|add|remove|toggle] [tag]" }
 
     fn execute_named(&self, args: &[&str], ctx: &CommandContext) -> CommandResult {
         let session_id = ctx.session_id.clone();
@@ -320,7 +320,7 @@ impl NamedCommand for TagCommand {
             "list" => {
                 let result = tokio::task::block_in_place(|| {
                     tokio::runtime::Handle::current()
-                        .block_on(claurst_core::history::load_session(&session_id))
+                        .block_on(cyphes_core::history::load_session(&session_id))
                 });
                 match result {
                     Ok(session) => {
@@ -350,14 +350,14 @@ impl NamedCommand for TagCommand {
                     Some(t) if !t.is_empty() => t.to_string(),
                     _ => {
                         return CommandResult::Error(
-                            "Usage: claurst tag add <tag>".to_string(),
+                            "Usage: cyphes tag add <tag>".to_string(),
                         )
                     }
                 };
 
                 let result = tokio::task::block_in_place(|| {
                     tokio::runtime::Handle::current()
-                        .block_on(claurst_core::history::tag_session(&session_id, &tag))
+                        .block_on(cyphes_core::history::tag_session(&session_id, &tag))
                 });
 
                 match result {
@@ -372,14 +372,14 @@ impl NamedCommand for TagCommand {
                     Some(t) if !t.is_empty() => t.to_string(),
                     _ => {
                         return CommandResult::Error(
-                            "Usage: claurst tag remove <tag>".to_string(),
+                            "Usage: cyphes tag remove <tag>".to_string(),
                         )
                     }
                 };
 
                 let result = tokio::task::block_in_place(|| {
                     tokio::runtime::Handle::current()
-                        .block_on(claurst_core::history::untag_session(&session_id, &tag))
+                        .block_on(cyphes_core::history::untag_session(&session_id, &tag))
                 });
 
                 match result {
@@ -392,7 +392,7 @@ impl NamedCommand for TagCommand {
                     Some(t) if !t.is_empty() => t.to_string(),
                     _ => {
                         return CommandResult::Error(
-                            "Usage: claurst tag toggle <tag>".to_string(),
+                            "Usage: cyphes tag toggle <tag>".to_string(),
                         )
                     }
                 };
@@ -400,7 +400,7 @@ impl NamedCommand for TagCommand {
                 // Load session to check existing tags
                 let load_result = tokio::task::block_in_place(|| {
                     tokio::runtime::Handle::current()
-                        .block_on(claurst_core::history::load_session(&session_id))
+                        .block_on(cyphes_core::history::load_session(&session_id))
                 });
 
                 match load_result {
@@ -410,7 +410,7 @@ impl NamedCommand for TagCommand {
                             // Tag exists — remove it
                             let remove_result = tokio::task::block_in_place(|| {
                                 tokio::runtime::Handle::current()
-                                    .block_on(claurst_core::history::untag_session(&session_id, &tag_clone))
+                                    .block_on(cyphes_core::history::untag_session(&session_id, &tag_clone))
                             });
                             match remove_result {
                                 Ok(()) => CommandResult::Message(format!("Removed tag: #{tag}")),
@@ -420,7 +420,7 @@ impl NamedCommand for TagCommand {
                             // Tag absent — add it
                             let add_result = tokio::task::block_in_place(|| {
                                 tokio::runtime::Handle::current()
-                                    .block_on(claurst_core::history::tag_session(&session_id, &tag_clone))
+                                    .block_on(cyphes_core::history::tag_session(&session_id, &tag_clone))
                             });
                             match add_result {
                                 Ok(()) => CommandResult::Message(format!("Added tag: #{tag}")),
@@ -434,7 +434,7 @@ impl NamedCommand for TagCommand {
                 }
             }
             sub => CommandResult::Error(format!(
-                "Unknown tag subcommand: '{sub}'\nUsage: claurst tag [list|add|remove|toggle] [tag]"
+                "Unknown tag subcommand: '{sub}'\nUsage: cyphes tag [list|add|remove|toggle] [tag]"
             )),
         }
     }
@@ -448,15 +448,15 @@ pub struct PassesCommand;
 
 impl NamedCommand for PassesCommand {
     fn name(&self) -> &str { "passes" }
-    fn description(&self) -> &str { "Share a free week of Claurst with friends" }
-    fn usage(&self) -> &str { "claurst passes" }
+    fn description(&self) -> &str { "Share a free week of CYPHES with friends" }
+    fn usage(&self) -> &str { "cyphes passes" }
 
     fn execute_named(&self, _args: &[&str], _ctx: &CommandContext) -> CommandResult {
         CommandResult::Message(
-            "Claurst Passes \u{2014} Share Claurst with friends\n\n\
-             Share a free week of Claurst with a friend\n\
+            "CYPHES Passes \u{2014} Share CYPHES with friends\n\n\
+             Share a free week of CYPHES with a friend\n\
              Visit https://claude.ai/passes to get your referral link\n\
-             Each referral gives your friend 1 week of Claurst Pro"
+             Each referral gives your friend 1 week of CYPHES Pro"
                 .to_string(),
         )
     }
@@ -494,16 +494,16 @@ pub struct IdeCommand;
 impl NamedCommand for IdeCommand {
     fn name(&self) -> &str { "ide" }
     fn description(&self) -> &str { "Manage IDE integrations and show status" }
-    fn usage(&self) -> &str { "claurst ide [status|connect|disconnect|open]" }
+    fn usage(&self) -> &str { "cyphes ide [status|connect|disconnect|open]" }
 
     fn execute_named(&self, _args: &[&str], _ctx: &CommandContext) -> CommandResult {
         // ---- Environment-based IDE detection --------------------------------
-        let env_detection = claurst_core::detect_ide();
+        let env_detection = cyphes_core::detect_ide();
         let env_section = match &env_detection {
             Some(kind) => {
                 let mut lines = vec![format!("Detected IDE: {}", kind.display_name())];
                 if let Some(cmd) = kind.extension_install_command() {
-                    lines.push(format!("To install the Claurst extension: {}", cmd));
+                    lines.push(format!("To install the CYPHES extension: {}", cmd));
                 }
                 lines.join("\n")
             }
@@ -512,7 +512,7 @@ impl NamedCommand for IdeCommand {
 
         // ---- Lockfile-based connection status --------------------------------
         let lockfile_dir = dirs::home_dir()
-            .map(|h| h.join(".claurst").join("ide"))
+            .map(|h| h.join(".cyphes").join("ide"))
             .unwrap_or_default();
 
         let mut ides = Vec::new();
@@ -548,7 +548,7 @@ impl NamedCommand for IdeCommand {
         let connection_section = if ides.is_empty() {
             "No active IDE extension connections found.".to_string()
         } else {
-            format!("Connected IDEs:\n{}\n\nUse 'claurst ide open <file>' to open a file in the IDE.", ides.join("\n"))
+            format!("Connected IDEs:\n{}\n\nUse 'cyphes ide open <file>' to open a file in the IDE.", ides.join("\n"))
         };
 
         CommandResult::Message(format!("{env_section}\n\n{connection_section}"))
@@ -564,7 +564,7 @@ pub struct PrCommentsCommand;
 impl NamedCommand for PrCommentsCommand {
     fn name(&self) -> &str { "pr-comments" }
     fn description(&self) -> &str { "Get review comments from the current GitHub pull request" }
-    fn usage(&self) -> &str { "claurst pr-comments" }
+    fn usage(&self) -> &str { "cyphes pr-comments" }
 
     fn execute_named(&self, _args: &[&str], _ctx: &CommandContext) -> CommandResult {
         // Step 1: Get current git remote + PR info via gh CLI
@@ -635,15 +635,15 @@ pub struct DesktopCommand;
 
 impl NamedCommand for DesktopCommand {
     fn name(&self) -> &str { "desktop" }
-    fn description(&self) -> &str { "Download and set up Claurst Desktop app" }
-    fn usage(&self) -> &str { "claurst desktop" }
+    fn description(&self) -> &str { "Download and set up CYPHES Desktop app" }
+    fn usage(&self) -> &str { "cyphes desktop" }
 
     fn execute_named(&self, _args: &[&str], ctx: &CommandContext) -> CommandResult {
         let os = std::env::consts::OS;
         let arch = std::env::consts::ARCH;
         let download_url = "https://claude.ai/download";
 
-        // Detect if Claurst Desktop is likely installed (platform-specific heuristic).
+        // Detect if CYPHES Desktop is likely installed (platform-specific heuristic).
         let desktop_likely_installed = match os {
             "macos" => {
                 std::path::Path::new("/Applications/Claude.app").exists()
@@ -669,11 +669,11 @@ impl NamedCommand for DesktopCommand {
             let deep_link = format!("claude://session/{}", session_id);
 
             let mut msg = String::new();
-            msg.push_str("\u{2713} Already connected to Claurst Desktop\n\n");
-            msg.push_str("Your Claurst session is synced with Claurst Desktop.\n\n");
+            msg.push_str("\u{2713} Already connected to CYPHES Desktop\n\n");
+            msg.push_str("Your CYPHES session is synced with CYPHES Desktop.\n\n");
             msg.push_str(&format!("Open this session in Desktop: {deep_link}\n\n"));
             if desktop_likely_installed {
-                msg.push_str("Claurst Desktop is installed on this machine.\n");
+                msg.push_str("CYPHES Desktop is installed on this machine.\n");
                 msg.push_str(&format!("Manage your installation: {download_url}"));
             } else {
                 msg.push_str(&format!("Download / manage Desktop: {download_url}"));
@@ -684,45 +684,45 @@ impl NamedCommand for DesktopCommand {
         let msg = if os == "macos" {
             if desktop_likely_installed {
                 format!(
-                    "Open Claurst Desktop \u{2014} macOS\n\n\
-                     Claurst Desktop appears to be installed.\n\
+                    "Open CYPHES Desktop \u{2014} macOS\n\n\
+                     CYPHES Desktop appears to be installed.\n\
                      Launch it from /Applications/Claude.app and sign in with your Anthropic account.\n\n\
                      Download / update: {download_url}"
                 )
             } else {
                 format!(
-                    "Download Claurst Desktop \u{2014} macOS\n\n\
+                    "Download CYPHES Desktop \u{2014} macOS\n\n\
                      Download: {download_url}\n\n\
                      Setup instructions:\n\
-                     1. Download and install Claurst Desktop for macOS\n\
-                     2. Open Claurst Desktop and sign in with the same Anthropic account\n\
-                     3. Claurst will detect the Desktop bridge automatically"
+                     1. Download and install CYPHES Desktop for macOS\n\
+                     2. Open CYPHES Desktop and sign in with the same Anthropic account\n\
+                     3. CYPHES will detect the Desktop bridge automatically"
                 )
             }
         } else if os == "windows" {
             let arch_note = if arch == "x86_64" { " (x64)" } else { "" };
             if desktop_likely_installed {
                 format!(
-                    "Open Claurst Desktop \u{2014} Windows{arch_note}\n\n\
-                     Claurst Desktop appears to be installed.\n\
+                    "Open CYPHES Desktop \u{2014} Windows{arch_note}\n\n\
+                     CYPHES Desktop appears to be installed.\n\
                      Launch it from your Start menu and sign in with your Anthropic account.\n\n\
                      Download / update: {download_url}"
                 )
             } else {
                 format!(
-                    "Download Claurst Desktop for Windows{arch_note}\n\n\
+                    "Download CYPHES Desktop for Windows{arch_note}\n\n\
                      Download: {download_url}\n\n\
                      Setup instructions:\n\
-                     1. Download and run the Claurst Desktop installer\n\
-                     2. Open Claurst Desktop and sign in with the same Anthropic account\n\
-                     3. Claurst will detect the Desktop bridge automatically"
+                     1. Download and run the CYPHES Desktop installer\n\
+                     2. Open CYPHES Desktop and sign in with the same Anthropic account\n\
+                     3. CYPHES will detect the Desktop bridge automatically"
                 )
             }
         } else {
             // Linux and other platforms
             format!(
-                "Claurst Desktop is not yet available for {os}\n\n\
-                 On Linux, you can use Claurst via the CLI or visit https://claude.ai in your browser.\n\
+                "CYPHES Desktop is not yet available for {os}\n\n\
+                 On Linux, you can use CYPHES via the CLI or visit https://claude.ai in your browser.\n\
                  Check {download_url} for the latest platform availability."
             )
         };
@@ -797,8 +797,8 @@ pub struct MobileCommand;
 
 impl NamedCommand for MobileCommand {
     fn name(&self) -> &str { "mobile" }
-    fn description(&self) -> &str { "Download the Claurst mobile app" }
-    fn usage(&self) -> &str { "claurst mobile [ios|android]" }
+    fn description(&self) -> &str { "Download the CYPHES mobile app" }
+    fn usage(&self) -> &str { "cyphes mobile [ios|android]" }
 
     fn execute_named(&self, args: &[&str], ctx: &CommandContext) -> CommandResult {
         let ios_url     = "https://apps.apple.com/app/claude-by-anthropic/id6473753684";
@@ -832,7 +832,7 @@ impl NamedCommand for MobileCommand {
         let qr_lines = render_qr(qr_url);
 
         let mut out = String::new();
-        out.push_str("Scan to download Claurst mobile app\n");
+        out.push_str("Scan to download CYPHES mobile app\n");
         out.push_str(&format!("Platform: {platform_label}\n\n"));
         if has_session {
             out.push_str("  [1] iOS    [2] Android    [3] Session (QR links to active session)\n\n");
@@ -868,12 +868,12 @@ pub struct InstallGithubAppCommand;
 
 impl NamedCommand for InstallGithubAppCommand {
     fn name(&self) -> &str { "install-github-app" }
-    fn description(&self) -> &str { "Set up Claurst GitHub Actions for a repository" }
-    fn usage(&self) -> &str { "claurst install-github-app" }
+    fn description(&self) -> &str { "Set up CYPHES GitHub Actions for a repository" }
+    fn usage(&self) -> &str { "cyphes install-github-app" }
 
     fn execute_named(&self, _args: &[&str], ctx: &CommandContext) -> CommandResult {
         let provider_id = ctx.config.selected_provider_id();
-        let provider_secret_step = claurst_core::config::primary_api_key_env_var_for_provider(provider_id)
+        let provider_secret_step = cyphes_core::config::primary_api_key_env_var_for_provider(provider_id)
             .map(|provider_secret| {
                 format!(
                     "3. Add your provider credential to repository secrets (for example {provider_secret})"
@@ -887,11 +887,11 @@ impl NamedCommand for InstallGithubAppCommand {
 
         CommandResult::Message(
             format!(
-                "To install the Claurst GitHub App:\n\
+                "To install the CYPHES GitHub App:\n\
              1. Visit https://github.com/apps/claude-code-app and click Install\n\
              2. Select the repositories to enable\n\
              {provider_secret_step}\n\n\
-             The app enables Claurst in GitHub Actions workflows for the configured provider."
+             The app enables CYPHES in GitHub Actions workflows for the configured provider."
             ),
         )
     }
@@ -905,8 +905,8 @@ pub struct RemoteSetupCommand;
 
 impl NamedCommand for RemoteSetupCommand {
     fn name(&self) -> &str { "remote-setup" }
-    fn description(&self) -> &str { "Check and configure a remote Claurst environment" }
-    fn usage(&self) -> &str { "claurst remote-setup" }
+    fn description(&self) -> &str { "Check and configure a remote CYPHES environment" }
+    fn usage(&self) -> &str { "cyphes remote-setup" }
 
     fn execute_named(&self, _args: &[&str], ctx: &CommandContext) -> CommandResult {
         use std::net::ToSocketAddrs;
@@ -914,7 +914,7 @@ impl NamedCommand for RemoteSetupCommand {
         let mut steps = Vec::new();
         let provider_id = ctx.config.selected_provider_id();
         let provider_name = provider_id.replace('-', " ");
-        let credential_hint = claurst_core::config::api_key_env_vars_for_provider(provider_id);
+        let credential_hint = cyphes_core::config::api_key_env_vars_for_provider(provider_id);
         let credentials_required = !matches!(
             provider_id,
             "ollama" | "lmstudio" | "lm-studio" | "llamacpp" | "llama-cpp" | "llama-server"
@@ -952,16 +952,16 @@ impl NamedCommand for RemoteSetupCommand {
             }
         ));
 
-        // Step 3: Check claurst config dir exists
-        let config_dir = claurst_core::config::Settings::config_dir();
+        // Step 3: Check cyphes config dir exists
+        let config_dir = cyphes_core::config::Settings::config_dir();
         let has_config = config_dir.exists();
         steps.push(format!(
-            "{} Claurst config dir {}",
+            "{} CYPHES config dir {}",
             if has_config { "\u{2713}" } else { "\u{2717}" },
             if has_config {
                 format!("exists at {}", config_dir.display())
             } else {
-                "missing \u{2014} run 'claurst' once to initialize".to_string()
+                "missing \u{2014} run 'cyphes' once to initialize".to_string()
             }
         ));
 
@@ -1000,9 +1000,9 @@ impl NamedCommand for RemoteSetupCommand {
              {}",
             steps.join("\n"),
             if all_ok {
-                "\u{2713} All checks passed. Claurst is ready for remote use.\nStart a session: claurst --bridge"
+                "\u{2713} All checks passed. CYPHES is ready for remote use.\nStart a session: cyphes --bridge"
             } else {
-                "\u{2717} Some checks failed. Fix the issues above and run 'claurst remote-setup' again."
+                "\u{2717} Some checks failed. Fix the issues above and run 'cyphes remote-setup' again."
             }
         ))
     }
@@ -1016,8 +1016,8 @@ pub struct StickersCommand;
 
 impl NamedCommand for StickersCommand {
     fn name(&self) -> &str { "stickers" }
-    fn description(&self) -> &str { "Open the Claurst sticker page in your browser" }
-    fn usage(&self) -> &str { "claurst stickers" }
+    fn description(&self) -> &str { "Open the CYPHES sticker page in your browser" }
+    fn usage(&self) -> &str { "cyphes stickers" }
 
     fn execute_named(&self, _args: &[&str], _ctx: &CommandContext) -> CommandResult {
         let url = "https://www.stickermule.com/claudecode";
@@ -1039,7 +1039,7 @@ pub struct UltraplanCommand;
 impl NamedCommand for UltraplanCommand {
     fn name(&self) -> &str { "ultraplan" }
     fn description(&self) -> &str { "Launch Ultraplan agentic code planner with extended thinking" }
-    fn usage(&self) -> &str { "claurst ultraplan [--effort=medium|high|maximum]" }
+    fn usage(&self) -> &str { "cyphes ultraplan [--effort=medium|high|maximum]" }
 
     fn execute_named(&self, args: &[&str], _ctx: &CommandContext) -> CommandResult {
         // Parse effort level from args
@@ -1084,7 +1084,7 @@ impl NamedCommand for crate::StatsCommand {
         "Aggregate token / cost / tool stats across saved sessions"
     }
     fn usage(&self) -> &str {
-        "claurst stats [summary|sessions|tools|daily|session <id>] \
+        "cyphes stats [summary|sessions|tools|daily|session <id>] \
          [--days N] [--top N] [--all-projects] [--json]"
     }
 
@@ -1132,11 +1132,11 @@ pub fn find_named_command(name: &str) -> Option<Box<dyn NamedCommand>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use claurst_core::cost::CostTracker;
+    use cyphes_core::cost::CostTracker;
 
     fn make_ctx() -> CommandContext {
         CommandContext {
-            config: claurst_core::config::Config::default(),
+            config: cyphes_core::config::Config::default(),
             cost_tracker: CostTracker::new(),
             messages: vec![],
             working_dir: std::path::PathBuf::from("."),

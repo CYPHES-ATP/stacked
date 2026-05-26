@@ -14,7 +14,7 @@ body:
         - Phase 1.2: Runtime Rebrand
         - Phase 1.3: Permission And Receipt UX
         - Phase 1.4: Internal Alpha
-        - Phase 2.0: Stacked v0.1
+        - Phase 2.0: CYPHES v0.1
     validations:
       required: true
   - type: textarea
@@ -29,9 +29,9 @@ body:
     attributes:
       label: Checklist
       value: |
-        - [ ] 
-        - [ ] 
-        - [ ] 
+        - [ ]
+        - [ ]
+        - [ ]
   - type: textarea
     id: validation
     attributes:

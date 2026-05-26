@@ -1,5 +1,5 @@
 [package]
-name = "claurst-core"
+name = "cyphes-core"
 version.workspace = true
 edition.workspace = true
 

@@ -1,13 +1,13 @@
 # Contributing
 
-Thanks for helping build Stacked. This project is in Phase 1, so the highest-value contributions are careful, well-scoped changes that move the Claurst fork toward a clean CYPHES experience without destabilizing the runtime.
+Thanks for helping build CYPHES. This project is in Phase 1, so the highest-value contributions are careful, well-scoped changes that move the node toward a clean CYPHES experience without destabilizing the runtime.
 
 ## Ground Rules
 
 - Do not copy or adapt leaked Anthropic Claude Code source.
 - Preserve GPL-3.0 licensing and upstream attribution.
 - Keep changes small enough to review.
-- Prefer existing Claurst architecture until a CYPHES replacement is explicitly designed.
+- Prefer existing runtime architecture until a CYPHES replacement is explicitly designed.
 - Avoid broad rewrites during Phase 1 unless an issue or ADR calls for them.
 - Never commit secrets, provider keys, private prompts, or local receipt artifacts.
 
@@ -30,7 +30,7 @@ For focused package work, run the smallest relevant test first, then expand as r
 
 ## Rebrand Work
 
-When replacing Claurst UI/UX with Stacked/CYPHES:
+When replacing inherited UI/UX with CYPHES:
 
 - Update user-facing copy before internal identifiers when possible.
 - Preserve compatibility aliases until the migration plan says otherwise.

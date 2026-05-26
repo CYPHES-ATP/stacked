@@ -345,7 +345,7 @@ pub fn default_bindings() -> Vec<ParsedBinding> {
 
 /// Current schema version for keybindings
 pub const KEYBINDINGS_SCHEMA_VERSION: u32 = 1;
-/// User keybindings loaded from ~/.claurst/keybindings.json
+/// User keybindings loaded from ~/.cyphes/keybindings.json
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserKeybindings {
     #[serde(default = "default_schema_version")]

@@ -4,11 +4,11 @@
 // in a single scrollable list with live search filtering.
 // Changes are persisted via Settings::save_sync() or settings.json writes.
 
-use claurst_core::config::{Config, Settings};
-use claurst_core::output_styles::{builtin_styles, find_style};
+use cyphes_core::config::{Config, Settings};
+use cyphes_core::output_styles::{builtin_styles, find_style};
 use crate::overlays::{
-    centered_rect, modal_search_line, render_dark_overlay, render_dialog_bg, CLAURST_ACCENT,
-    CLAURST_MUTED, CLAURST_PANEL_BG,
+    centered_rect, modal_search_line, render_dark_overlay, render_dialog_bg, CYPHES_ACCENT,
+    CYPHES_MUTED, CYPHES_PANEL_BG,
 };
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
@@ -127,9 +127,9 @@ impl SettingsScreen {
         self.compact_threshold = self.settings_snapshot.config.compact_threshold.to_string();
         self.auto_commits = self.settings_snapshot.config.auto_commits.unwrap_or(false);
         self.output_format = match &self.settings_snapshot.config.output_format {
-            claurst_core::config::OutputFormat::Text => "text".to_string(),
-            claurst_core::config::OutputFormat::Json => "json".to_string(),
-            claurst_core::config::OutputFormat::StreamJson => "stream_json".to_string(),
+            cyphes_core::config::OutputFormat::Text => "text".to_string(),
+            cyphes_core::config::OutputFormat::Json => "json".to_string(),
+            cyphes_core::config::OutputFormat::StreamJson => "stream_json".to_string(),
         };
         self.disable_claude_mds = self.settings_snapshot.config.disable_claude_mds;
         self.file_injection_enabled = self.settings_snapshot.config.file_injection_enabled;
@@ -262,7 +262,7 @@ fn all_entries(screen: &SettingsScreen) -> Vec<SettingsEntry> {
             kind: SettingKind::Number,
             value: screen.settings_snapshot.config.max_tokens
                 .map(|n| n.to_string())
-                .unwrap_or_else(|| claurst_core::constants::DEFAULT_MAX_TOKENS.to_string()),
+                .unwrap_or_else(|| cyphes_core::constants::DEFAULT_MAX_TOKENS.to_string()),
         },
         SettingsEntry {
             key: "auto_compact",
@@ -460,18 +460,18 @@ pub fn render_settings_screen(frame: &mut Frame, screen: &SettingsScreen, area: 
 
     // Header
     let title = Line::from(vec![
-        Span::styled(" Settings", Style::default().fg(CLAURST_ACCENT).add_modifier(Modifier::BOLD)),
-        Span::styled(" - Stacked", Style::default().fg(CLAURST_MUTED)),
+        Span::styled(" Settings", Style::default().fg(CYPHES_ACCENT).add_modifier(Modifier::BOLD)),
+        Span::styled(" - CYPHES", Style::default().fg(CYPHES_MUTED)),
         Span::styled(
             format!("{:>width$}", "Esc close", width = inner.width.saturating_sub(19) as usize),
-            Style::default().fg(CLAURST_MUTED),
+            Style::default().fg(CYPHES_MUTED),
         ),
     ]);
-    frame.render_widget(Paragraph::new(title).style(Style::default().bg(CLAURST_PANEL_BG)), header_area);
+    frame.render_widget(Paragraph::new(title).style(Style::default().bg(CYPHES_PANEL_BG)), header_area);
 
     // Search
-    let search_line = modal_search_line(&screen.search_query, "Type to search settings...", Color::DarkGray, CLAURST_ACCENT);
-    frame.render_widget(Paragraph::new(search_line).style(Style::default().bg(CLAURST_PANEL_BG)), search_area);
+    let search_line = modal_search_line(&screen.search_query, "Type to search settings...", Color::DarkGray, CYPHES_ACCENT);
+    frame.render_widget(Paragraph::new(search_line).style(Style::default().bg(CYPHES_PANEL_BG)), search_area);
 
     // Content
     render_settings_list(frame, screen, content_area);
@@ -514,23 +514,23 @@ pub fn render_settings_screen(frame: &mut Frame, screen: &SettingsScreen, area: 
     // Footer
     let footer = if screen.edit_field.is_some() {
         Line::from(vec![
-            Span::styled(" Enter ", Style::default().fg(CLAURST_ACCENT).add_modifier(Modifier::BOLD)),
+            Span::styled(" Enter ", Style::default().fg(CYPHES_ACCENT).add_modifier(Modifier::BOLD)),
             Span::raw("save  "),
             Span::styled(" Esc ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
             Span::raw("cancel"),
         ])
     } else {
         Line::from(vec![
-            Span::styled(" ↑↓ ", Style::default().fg(CLAURST_ACCENT).add_modifier(Modifier::BOLD)),
+            Span::styled(" ↑↓ ", Style::default().fg(CYPHES_ACCENT).add_modifier(Modifier::BOLD)),
             Span::raw("navigate  "),
-            Span::styled(" Enter ", Style::default().fg(CLAURST_ACCENT).add_modifier(Modifier::BOLD)),
+            Span::styled(" Enter ", Style::default().fg(CYPHES_ACCENT).add_modifier(Modifier::BOLD)),
             Span::raw("toggle/edit  "),
             Span::styled(" Esc ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
             Span::raw("close"),
         ])
     };
     let footer_para = Paragraph::new(vec![footer])
-        .style(Style::default().fg(CLAURST_MUTED).bg(CLAURST_PANEL_BG))
+        .style(Style::default().fg(CYPHES_MUTED).bg(CYPHES_PANEL_BG))
         .alignment(Alignment::Center);
     frame.render_widget(footer_para, footer_area);
 }
@@ -570,7 +570,7 @@ fn render_settings_list(frame: &mut Frame, screen: &SettingsScreen, area: Rect) 
         let row_style = if is_selected {
             Style::default()
                 .fg(Color::Black)
-                .bg(CLAURST_ACCENT)
+                .bg(CYPHES_ACCENT)
                 .add_modifier(Modifier::BOLD)
         } else {
             Style::default()
@@ -780,9 +780,9 @@ fn toggle_or_cycle_current(screen: &mut SettingsScreen) {
                     "output_format" => {
                         screen.output_format = new_value.to_string();
                         screen.settings_snapshot.config.output_format = match new_value {
-                            "json" => claurst_core::config::OutputFormat::Json,
-                            "stream_json" => claurst_core::config::OutputFormat::StreamJson,
-                            _ => claurst_core::config::OutputFormat::Text,
+                            "json" => cyphes_core::config::OutputFormat::Json,
+                            "stream_json" => cyphes_core::config::OutputFormat::StreamJson,
+                            _ => cyphes_core::config::OutputFormat::Text,
                         };
                         let _ = screen.settings_snapshot.save_sync();
                     }

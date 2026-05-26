@@ -46,7 +46,7 @@ impl ColorPalette {
         }
     }
 
-    /// Default Stacked/CYPHES theme
+    /// Default CYPHES theme
     fn default_theme() -> Self {
         Self {
             error: Color::Rgb(255, 112, 67),       // CYPHES orange

@@ -1,21 +1,21 @@
 {
-  "name": "claurst",
+  "name": "cyphes",
   "version": "0.1.4",
   "description": "CYPHES Phase 1 fork of an open-source Rust coding-agent runtime",
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CYPHES-ATP/stacked.git"
+    "url": "git+https://github.com/CYPHES-ATP/node.git"
   },
-  "homepage": "https://github.com/CYPHES-ATP/stacked",
+  "homepage": "https://github.com/CYPHES-ATP/node",
   "bugs": {
-    "url": "https://github.com/CYPHES-ATP/stacked/issues"
+    "url": "https://github.com/CYPHES-ATP/node/issues"
   },
   "keywords": [
     "ai",
     "coding-agent",
     "cyphes",
-    "stacked",
+    "atp-node",
     "agent-transfer-protocol",
     "terminal",
     "tui",
@@ -23,7 +23,7 @@
   ],
   "author": "CYPHES",
   "bin": {
-    "claurst": "bin/claurst"
+    "cyphes": "bin/cyphes"
   },
   "scripts": {
     "postinstall": "node install.js"

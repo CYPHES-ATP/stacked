@@ -1,13 +1,13 @@
 [package]
-name = "claurst-query"
+name = "cyphes-query"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-claurst-core = { workspace = true }
-claurst-api = { workspace = true }
-claurst-plugins = { workspace = true }
-claurst-tools = { workspace = true }
+cyphes-core = { workspace = true }
+cyphes-api = { workspace = true }
+cyphes-plugins = { workspace = true }
+cyphes-tools = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
 futures = { workspace = true }

@@ -1,5 +1,5 @@
 //! Session analytics: read persisted JSONL transcripts under
-//! `~/.claurst/projects/<base64url(cwd)>/<session>.jsonl` and produce
+//! `~/.cyphes/projects/<base64url(cwd)>/<session>.jsonl` and produce
 //! token / cost / tool-usage summaries.
 //!
 //! This is the persisted complement to the in-memory `/stats` slash command
@@ -25,8 +25,8 @@ use base64::Engine;
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
 
-use claurst_core::session_storage::TranscriptEntry;
-use claurst_core::types::ContentBlock;
+use cyphes_core::session_storage::TranscriptEntry;
+use cyphes_core::types::ContentBlock;
 
 use crate::{CommandContext, CommandResult};
 
@@ -115,7 +115,7 @@ fn parse_args(raw: &[&str]) -> Result<Args, String> {
                 session_id = positional.get(1).map(|s| s.to_string());
                 if session_id.is_none() {
                     return Err(
-                        "Usage: claurst stats session <session-id>".to_string(),
+                        "Usage: cyphes stats session <session-id>".to_string(),
                     );
                 }
                 Subcommand::SessionDetail
@@ -135,9 +135,9 @@ fn parse_args(raw: &[&str]) -> Result<Args, String> {
 }
 
 fn help_text() -> &'static str {
-    "Usage: claurst stats [subcommand] [flags]\n\
+    "Usage: cyphes stats [subcommand] [flags]\n\
      \n\
-     Reads persisted JSONL transcripts under ~/.claurst/projects/ and produces\n\
+     Reads persisted JSONL transcripts under ~/.cyphes/projects/ and produces\n\
      token, cost, and tool-usage summaries.\n\
      \n\
      Subcommands:\n  \
@@ -218,8 +218,8 @@ const MAX_PARSE_BYTES: u64 = 50 * 1024 * 1024;
 const TAIL_WINDOW: u64 = 64 * 1024;
 
 fn projects_dir() -> PathBuf {
-    // Same convention as core: ~/.claurst/projects/
-    claurst_core::config::Settings::config_dir().join("projects")
+    // Same convention as core: ~/.cyphes/projects/
+    cyphes_core::config::Settings::config_dir().join("projects")
 }
 
 fn encoded_dir_for_cwd(cwd: &Path) -> String {
@@ -683,8 +683,8 @@ fn render_summary(agg: &Aggregated, ctx: &CommandContext) -> String {
     if agg.sessions.is_empty() {
         return format!(
             "{}\n\n{}\n\nNo sessions found.\n\nLooked under {}.\n\
-             Try `claurst stats --all-projects` to widen the scope.",
-            header("Claurst Session Stats"),
+             Try `cyphes stats --all-projects` to widen the scope.",
+            header("CYPHES Session Stats"),
             render_scope_line(agg, ctx),
             projects_dir().display(),
         );
@@ -692,7 +692,7 @@ fn render_summary(agg: &Aggregated, ctx: &CommandContext) -> String {
 
     let totals = agg.totals();
     let mut out = String::new();
-    out.push_str(&header("Claurst Session Stats"));
+    out.push_str(&header("CYPHES Session Stats"));
     out.push('\n');
     out.push_str(&render_scope_line(agg, ctx));
     out.push_str("\n\n");
@@ -783,7 +783,7 @@ fn render_summary(agg: &Aggregated, ctx: &CommandContext) -> String {
     }
 
     out.push_str(
-        "\nTry: claurst stats sessions · claurst stats tools · claurst stats daily\n",
+        "\nTry: cyphes stats sessions · cyphes stats tools · cyphes stats daily\n",
     );
     out
 }
@@ -846,13 +846,13 @@ fn render_sessions(agg: &Aggregated, top: Option<usize>, ctx: &CommandContext) -
     if let Some(n) = top {
         if sessions.len() > n {
             out.push_str(&format!(
-                "\n  … {} more session(s) hidden. Use `claurst stats sessions` (no --top) to see all.\n",
+                "\n  … {} more session(s) hidden. Use `cyphes stats sessions` (no --top) to see all.\n",
                 sessions.len() - n
             ));
         }
     }
     out.push_str(
-        "\nUse `claurst stats session <id>` to drill into a session.\n",
+        "\nUse `cyphes stats session <id>` to drill into a session.\n",
     );
     out
 }
@@ -1215,11 +1215,11 @@ pub fn run(raw: &[&str], ctx: &CommandContext) -> CommandResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use claurst_core::session_storage::{
+    use cyphes_core::session_storage::{
         write_transcript_entry, AiTitleEntry, CustomTitleEntry, LastPromptEntry,
         TranscriptMessage,
     };
-    use claurst_core::types::{Message, MessageContent, MessageCost, Role};
+    use cyphes_core::types::{Message, MessageContent, MessageCost, Role};
     use tempfile::TempDir;
 
     fn make_assistant_with_cost(

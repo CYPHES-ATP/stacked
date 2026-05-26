@@ -1,27 +1,27 @@
 [package]
-name = "claurst"
+name = "cyphes"
 version.workspace = true
 edition.workspace = true
 
 [[bin]]
-name = "claurst"
+name = "cyphes"
 path = "src/main.rs"
 
 [features]
 default = ["voice"]
-voice = ["claurst-core/voice", "claurst-tui/voice"]
+voice = ["cyphes-core/voice", "cyphes-tui/voice"]
 
 [dependencies]
-claurst-core = { workspace = true }
-claurst-api = { workspace = true }
-claurst-acp = { workspace = true }
-claurst-tools = { workspace = true }
-claurst-query = { workspace = true }
-claurst-tui = { workspace = true }
-claurst-commands = { workspace = true }
-claurst-mcp = { workspace = true }
-claurst-bridge = { workspace = true }
-claurst-plugins = { workspace = true }
+cyphes-core = { workspace = true }
+cyphes-api = { workspace = true }
+cyphes-acp = { workspace = true }
+cyphes-tools = { workspace = true }
+cyphes-query = { workspace = true }
+cyphes-tui = { workspace = true }
+cyphes-commands = { workspace = true }
+cyphes-mcp = { workspace = true }
+cyphes-bridge = { workspace = true }
+cyphes-plugins = { workspace = true }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 clap = { workspace = true }

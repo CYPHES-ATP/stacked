@@ -1,6 +1,6 @@
 # LLM Providers
 
-Claurst supports a wide range of LLM providers through a unified provider abstraction. Every provider implements the same `LlmProvider` trait, so switching between them requires only a configuration change.
+CYPHES supports a wide range of LLM providers through a unified provider abstraction. Every provider implements the same `LlmProvider` trait, so switching between them requires only a configuration change.
 
 ---
 
@@ -9,12 +9,12 @@ Claurst supports a wide range of LLM providers through a unified provider abstra
 Use the `--provider` flag on any invocation to override the active provider:
 
 ```
-claurst --provider openai "refactor this module"
-claurst --provider ollama "explain this function"
-claurst --provider groq --model llama-3.3-70b-versatile "write tests"
+cyphes --provider openai "refactor this module"
+cyphes --provider ollama "explain this function"
+cyphes --provider groq --model llama-3.3-70b-versatile "write tests"
 ```
 
-The provider can also be set persistently in `~/.claurst/settings.json`:
+The provider can also be set persistently in `~/.cyphes/settings.json`:
 
 ```json
 {
@@ -22,7 +22,7 @@ The provider can also be set persistently in `~/.claurst/settings.json`:
 }
 ```
 
-When no provider is specified, Claurst defaults to **Anthropic**.
+When no provider is specified, CYPHES defaults to **Anthropic**.
 
 ---
 
@@ -246,7 +246,7 @@ Native Cohere API adapter.
 
 Connects to a locally running Ollama instance. No API key required.
 
-**Base URL:** Reads `OLLAMA_HOST` (defaults to `http://localhost:11434`). Claurst appends `/v1` to construct the OpenAI-compatible endpoint.
+**Base URL:** Reads `OLLAMA_HOST` (defaults to `http://localhost:11434`). CYPHES appends `/v1` to construct the OpenAI-compatible endpoint.
 
 **Default model:** `llama3.2`
 
@@ -268,7 +268,7 @@ Connects to a locally running Ollama instance. No API key required.
 Run a model locally first with `ollama pull llama3.2`, then:
 
 ```
-claurst --provider ollama --model llama3.2 "explain this code"
+cyphes --provider ollama --model llama3.2 "explain this code"
 ```
 
 ---
@@ -277,7 +277,7 @@ claurst --provider ollama --model llama3.2 "explain this code"
 
 Connects to a locally running LM Studio server. No API key required.
 
-**Base URL:** Reads `LM_STUDIO_HOST` (defaults to `http://localhost:1234`). Claurst appends `/v1`.
+**Base URL:** Reads `LM_STUDIO_HOST` (defaults to `http://localhost:1234`). CYPHES appends `/v1`.
 
 **Default model:** `default` (whichever model is loaded in LM Studio)
 
@@ -300,7 +300,7 @@ Connects to a locally running LM Studio server. No API key required.
 
 Connects to a locally running llama.cpp HTTP server. No API key required.
 
-**Base URL:** Reads `LLAMA_CPP_HOST` (defaults to `http://localhost:8080`). Claurst appends `/v1`.
+**Base URL:** Reads `LLAMA_CPP_HOST` (defaults to `http://localhost:8080`). CYPHES appends `/v1`.
 
 **Default model:** `default`
 
@@ -421,7 +421,7 @@ OpenAI-compatible API with Mistral-specific protocol quirks (tool call ID format
 
 ### OpenRouter
 
-Unified API gateway to many models. Sends `HTTP-Referer: https://claurst.ai/` and `X-Title: Claurst` headers automatically.
+Unified API gateway to many models. Sends `HTTP-Referer: https://cyphes.ai/` and `X-Title: CYPHES` headers automatically.
 
 **Authentication:** `OPENROUTER_API_KEY` environment variable.
 
@@ -573,7 +573,7 @@ Wafer-scale inference hardware.
 
 ## Per-Provider Configuration in settings.json
 
-The `providers` map in `~/.claurst/settings.json` accepts per-provider `ProviderConfig` objects:
+The `providers` map in `~/.cyphes/settings.json` accepts per-provider `ProviderConfig` objects:
 
 ```json
 {
@@ -629,6 +629,6 @@ The above example allows only `gpt-4o` (whitelist minus blacklist).
 
 ## Model Registry
 
-Claurst ships a bundled snapshot of models for Anthropic, OpenAI, and Google. At runtime it optionally refreshes from the public `https://models.dev/api.json` API (cached to `~/.claurst/models_cache.json`, refreshed at most every 5 minutes). Network failures are swallowed silently; the bundled snapshot is always sufficient for normal operation.
+CYPHES ships a bundled snapshot of models for Anthropic, OpenAI, and Google. At runtime it optionally refreshes from the public `https://models.dev/api.json` API (cached to `~/.cyphes/models_cache.json`, refreshed at most every 5 minutes). Network failures are swallowed silently; the bundled snapshot is always sufficient for normal operation.
 
-When no model is explicitly set, Claurst scores available models by priority patterns to pick the best default. Well-known model prefixes (`claude-*`, `gpt-*`, `gemini-*`, etc.) are always routed to their canonical provider regardless of gateway entries in the remote cache.
+When no model is explicitly set, CYPHES scores available models by priority patterns to pick the best default. Well-known model prefixes (`claude-*`, `gpt-*`, `gemini-*`, etc.) are always routed to their canonical provider regardless of gateway entries in the remote cache.

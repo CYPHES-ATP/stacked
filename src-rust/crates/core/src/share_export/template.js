@@ -36,12 +36,12 @@
   }
 
   var title = meta.title || ('Session ' + (meta.session_id || ''));
-  document.title = title + ' — Claurst Session';
+  document.title = title + ' — CYPHES Session';
 
   var msgsEl = document.getElementById('messages');
 
   // Tool-call visibility preference, persisted across reloads. Default: shown.
-  var TOOLS_PREF_KEY = 'claurst.share.showTools';
+  var TOOLS_PREF_KEY = 'cyphes.share.showTools';
   var showTools = true;
   try {
     var stored = localStorage.getItem(TOOLS_PREF_KEY);
@@ -66,7 +66,7 @@
     bits.push(messages.length + ' message' + (messages.length === 1 ? '' : 's'));
     if (meta.working_dir) bits.push(meta.working_dir);
     if (exported) bits.push(exported);
-    if (meta.app_version) bits.push('claurst ' + meta.app_version);
+    if (meta.app_version) bits.push('cyphes ' + meta.app_version);
     bits.forEach(function (b) {
       var s = document.createElement('span');
       var pip = document.createElement('span');
@@ -271,17 +271,17 @@
     d.className = 'tool-call';
     d.open = true;
     var s = document.createElement('summary');
-    
+
     var badge = document.createElement('span');
     badge.className = 'badge tool-badge';
     badge.textContent = 'tool call';
     s.appendChild(badge);
-    
+
     var nameSpan = document.createElement('span');
     nameSpan.className = 'tool-name';
     nameSpan.textContent = block.name || 'tool';
     s.appendChild(nameSpan);
-    
+
     d.appendChild(s);
     var b = document.createElement('div'); b.className = 'body';
     var pre = document.createElement('pre');
@@ -298,17 +298,17 @@
     d.className = 'tool-result' + (isError ? ' error' : '');
     d.open = true;
     var s = document.createElement('summary');
-    
+
     var badge = document.createElement('span');
     badge.className = 'badge result-badge' + (isError ? ' error' : '');
     badge.textContent = isError ? 'error' : 'result';
     s.appendChild(badge);
-    
+
     var labelSpan = document.createElement('span');
     labelSpan.className = 'result-label';
     labelSpan.textContent = 'tool output';
     s.appendChild(labelSpan);
-    
+
     d.appendChild(s);
     var b = document.createElement('div'); b.className = 'body';
     var text;
@@ -331,12 +331,12 @@
     var d = document.createElement('details');
     d.className = 'thinking';
     var s = document.createElement('summary');
-    
+
     var badge = document.createElement('span');
     badge.className = 'badge thinking-badge';
     badge.textContent = 'thinking';
     s.appendChild(badge);
-    
+
     d.appendChild(s);
     var b = document.createElement('div'); b.className = 'body';
     var pre = document.createElement('pre');

@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Claurst installer for Linux and macOS.
+# CYPHES installer for Linux and macOS.
 #
 # Usage (one-liner):
-#   curl -fsSL https://github.com/Kuberwastaken/claurst/releases/latest/download/install.sh | bash
+#   curl -fsSL https://github.com/CYPHES-ATP/node/releases/latest/download/install.sh | bash
 #
 # Or download and run locally:
-#   curl -fsSL -O https://github.com/Kuberwastaken/claurst/releases/latest/download/install.sh
+#   curl -fsSL -O https://github.com/CYPHES-ATP/node/releases/latest/download/install.sh
 #   chmod +x install.sh
 #   ./install.sh
 
 set -euo pipefail
 
-APP=claurst
-REPO=Kuberwastaken/claurst
+APP=cyphes
+REPO=CYPHES-ATP/node
 
 # ANSI colours
 MUTED='\033[0;2m'
@@ -23,7 +23,7 @@ NC='\033[0m'
 
 usage() {
     cat <<EOF
-Claurst installer
+CYPHES installer
 
 Usage: install.sh [options]
 
@@ -32,12 +32,12 @@ Options:
     -v, --version <version> Install a specific version (e.g., 0.1.0 or v0.1.0)
     -b, --binary <path>     Install from a local binary instead of downloading
         --no-modify-path    Don't modify shell config files (.zshrc, .bashrc, etc.)
-        --install-dir <dir> Override install location (default: ~/.claurst/bin)
+        --install-dir <dir> Override install location (default: ~/.cyphes/bin)
 
 Examples:
-    curl -fsSL https://github.com/Kuberwastaken/claurst/releases/latest/download/install.sh | bash
+    curl -fsSL https://github.com/CYPHES-ATP/node/releases/latest/download/install.sh | bash
     ./install.sh --version 0.1.0
-    ./install.sh --binary /path/to/claurst
+    ./install.sh --binary /path/to/cyphes
 EOF
 }
 
@@ -104,7 +104,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-INSTALL_DIR="${install_dir_override:-$HOME/.claurst/bin}"
+INSTALL_DIR="${install_dir_override:-$HOME/.cyphes/bin}"
 mkdir -p "$INSTALL_DIR"
 
 # ----- Detect platform & arch -----
@@ -186,7 +186,7 @@ check_existing_install() {
             print_message info "${MUTED}Use --version to install a different version, or pass a different one to upgrade.${NC}"
             exit 0
         fi
-        print_message info "${MUTED}Found existing claurst at ${NC}$existing_path${MUTED} (v$installed_version) - upgrading to v$specific_version${NC}"
+        print_message info "${MUTED}Found existing cyphes at ${NC}$existing_path${MUTED} (v$installed_version) - upgrading to v$specific_version${NC}"
     fi
 }
 
@@ -195,7 +195,7 @@ download_and_install() {
     local archive="${APP}-${target}.tar.gz"
     local url="https://github.com/${REPO}/releases/download/v${specific_version}/${archive}"
     local tmp_dir
-    tmp_dir=$(mktemp -d -t claurst-install-XXXXXX)
+    tmp_dir=$(mktemp -d -t cyphes-install-XXXXXX)
     trap "rm -rf '$tmp_dir'" EXIT
 
     print_message info "${MUTED}Installing ${NC}${APP} ${MUTED}v${NC}${specific_version} ${MUTED}(${target})${NC}"
@@ -305,7 +305,7 @@ add_to_path_if_needed() {
 
     {
         echo ""
-        echo "# claurst"
+        echo "# cyphes"
         echo "$path_line"
     } >> "$config_file"
     print_message success "Added $INSTALL_DIR to PATH in $config_file"
@@ -340,15 +340,15 @@ main() {
 
     # Goodbye banner
     echo ""
-    print_message success "claurst is installed!"
+    print_message success "cyphes is installed!"
     echo ""
     echo -e "${MUTED}Quickstart:${NC}"
     echo -e "  ${MUTED}# Set an API key${NC}"
     echo -e "  export ANTHROPIC_API_KEY=sk-ant-..."
     echo -e ""
     echo -e "  ${MUTED}# Open a new terminal, then:${NC}"
-    echo -e "  ${GREEN}claurst${NC}              ${MUTED}# Interactive TUI${NC}"
-    echo -e "  ${GREEN}claurst -p \"...\"${NC}       ${MUTED}# Headless one-shot${NC}"
+    echo -e "  ${GREEN}cyphes${NC}              ${MUTED}# Interactive TUI${NC}"
+    echo -e "  ${GREEN}cyphes -p \"...\"${NC}       ${MUTED}# Headless one-shot${NC}"
     echo ""
     echo -e "${MUTED}Docs: ${NC}https://github.com/${REPO}"
 }

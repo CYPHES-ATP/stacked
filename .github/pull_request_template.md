@@ -14,7 +14,7 @@
 
 - [ ] This PR does not copy, adapt, or derive from leaked/proprietary source.
 - [ ] New third-party code or assets are attributed and license-compatible.
-- [ ] Upstream Claurst attribution remains intact where relevant.
+- [ ] Upstream upstream attribution remains intact where relevant.
 
 # Security Check
 

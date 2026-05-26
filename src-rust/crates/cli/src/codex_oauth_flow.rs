@@ -1,4 +1,4 @@
-//! OpenAI Codex OAuth 2.0 PKCE flow for Claurst.
+//! OpenAI Codex OAuth 2.0 PKCE flow for CYPHES.
 //!
 //! Implements authorization code flow with PKCE to obtain OpenAI access
 //! tokens for Codex model access.
@@ -11,9 +11,9 @@ use sha2::{Digest, Sha256};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::net::TcpListener;
 use tokio::sync::mpsc;
-use claurst_core::oauth_config::CodexTokens;
-use claurst_core::codex_oauth::{CODEX_CLIENT_ID, CODEX_AUTHORIZE_URL, CODEX_OAUTH_PORT, CODEX_REDIRECT_URI, CODEX_SCOPES, CODEX_TOKEN_URL};
-use claurst_tui::DeviceAuthEvent;
+use cyphes_core::oauth_config::CodexTokens;
+use cyphes_core::codex_oauth::{CODEX_CLIENT_ID, CODEX_AUTHORIZE_URL, CODEX_OAUTH_PORT, CODEX_REDIRECT_URI, CODEX_SCOPES, CODEX_TOKEN_URL};
+use cyphes_tui::DeviceAuthEvent;
 
 /// Generate a PKCE code verifier (random 64-byte base64url string).
 pub fn generate_code_verifier() -> String {
@@ -48,7 +48,7 @@ pub fn generate_state() -> String {
 /// Build the OpenAI authorization URL for Codex OAuth.
 pub fn build_auth_url(code_challenge: &str, state: &str) -> String {
     format!(
-        "{}?response_type=code&client_id={}&redirect_uri={}&scope={}&code_challenge={}&code_challenge_method=S256&state={}&id_token_add_organizations=true&codex_cli_simplified_flow=true&originator=claurst",
+        "{}?response_type=code&client_id={}&redirect_uri={}&scope={}&code_challenge={}&code_challenge_method=S256&state={}&id_token_add_organizations=true&codex_cli_simplified_flow=true&originator=cyphes",
         CODEX_AUTHORIZE_URL,
         CODEX_CLIENT_ID,
         urlencoding::encode(CODEX_REDIRECT_URI),
@@ -102,7 +102,7 @@ pub async fn run_oauth_flow_with_label(
     let tokens = exchange_code_for_tokens(&code, &verifier).await?;
 
     // Persist tokens and register an account profile in the registry.
-    claurst_core::oauth_config::save_codex_tokens_and_register(&tokens, label)?;
+    cyphes_core::oauth_config::save_codex_tokens_and_register(&tokens, label)?;
 
     eprintln!("Codex login successful!");
     Ok(tokens)
@@ -154,7 +154,7 @@ async fn wait_for_callback(listener: TcpListener) -> anyhow::Result<(String, Str
     // Send HTML response to browser before processing
     let html = if error.is_empty() {
         "<html><body style='background:#131010;color:#f1ecec;display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui'>\
-         <div style='text-align:center'><h1>Authorization Successful</h1><p>You can close this window and return to Claurst.</p></div>\
+         <div style='text-align:center'><h1>Authorization Successful</h1><p>You can close this window and return to CYPHES.</p></div>\
          <script>setTimeout(()=>window.close(),2000)</script></body></html>"
     } else {
         "<html><body style='background:#131010;color:#f1ecec;display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui'>\

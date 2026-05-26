@@ -14,8 +14,8 @@ use std::pin::Pin;
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use claurst_core::provider_id::{ModelId, ProviderId};
-use claurst_core::types::{ContentBlock, Message, MessageContent, Role, ToolResultContent, UsageInfo};
+use cyphes_core::provider_id::{ModelId, ProviderId};
+use cyphes_core::types::{ContentBlock, Message, MessageContent, Role, ToolResultContent, UsageInfo};
 use futures::{Stream, StreamExt};
 use serde_json::{json, Value};
 use tracing::{debug, warn};
@@ -1049,7 +1049,7 @@ fn uuid_v4_simple() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use claurst_core::types::Message;
+    use cyphes_core::types::Message;
     use serde_json::json;
 
     fn test_request(messages: Vec<Message>) -> ProviderRequest {

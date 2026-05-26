@@ -1,9 +1,9 @@
-// OAuth 2.0 PKCE login flow for the Claurst CLI.
+// OAuth 2.0 PKCE login flow for the CYPHES CLI.
 //
 // Uses the Claude Code client ID and impersonates Claude Code at request time
-// (see `claurst_core::oauth_config` for the impersonation constants and
-// `claurst_api::AnthropicClient::apply_oauth_stealth` for how they're applied).
-// Claude Pro/Max tokens used through Claurst draw from the account's "extra
+// (see `cyphes_core::oauth_config` for the impersonation constants and
+// `cyphes_api::AnthropicClient::apply_oauth_stealth` for how they're applied).
+// Claude Pro/Max tokens used through CYPHES draw from the account's "extra
 // usage" pool, not subscription quota — users should be aware of this before
 // switching from API-key auth.
 //
@@ -16,11 +16,11 @@
 //    b. User manually pastes the authorization code at the terminal
 // 5. Exchange the authorization code for tokens via POST to TOKEN_URL
 // 6. For Console flow: call create_api_key endpoint to get an API key
-// 7. Save OAuthTokens to ~/.claurst/oauth_tokens.json
+// 7. Save OAuthTokens to ~/.cyphes/oauth_tokens.json
 // 8. Return the credential (API key or Bearer token)
 
 use anyhow::{bail, Context};
-use claurst_core::oauth::{self, OAuthTokens};
+use cyphes_core::oauth::{self, OAuthTokens};
 use serde::Deserialize;
 use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};

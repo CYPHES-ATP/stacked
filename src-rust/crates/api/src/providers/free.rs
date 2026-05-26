@@ -9,7 +9,7 @@
 //
 // Inspired by https://github.com/tashfeenahmed/freellmapi — the same
 // "aggregate the free tiers from many providers behind one OpenAI-
-// compatible endpoint" idea, ported into claurst's native provider
+// compatible endpoint" idea, ported into cyphes's native provider
 // trait.
 //
 // Routing:
@@ -24,7 +24,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use claurst_core::provider_id::{ModelId, ProviderId};
+use cyphes_core::provider_id::{ModelId, ProviderId};
 use futures::Stream;
 
 use crate::provider::{LlmProvider, ModelInfo};
@@ -40,7 +40,7 @@ use crate::provider_types::{
 
 /// One upstream provider in the free-mode chain.
 ///
-/// `id` is the canonical claurst `ProviderId` string — the auth store key the
+/// `id` is the canonical cyphes `ProviderId` string — the auth store key the
 /// dialog writes to, and the prefix the user types for `<id>/<model>` pinning.
 #[derive(Debug, Clone, Copy)]
 pub struct FreeUpstream {
@@ -430,7 +430,7 @@ impl LlmProvider for FreeProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use claurst_core::types::{Message, UsageInfo};
+    use cyphes_core::types::{Message, UsageInfo};
 
     use crate::provider_types::StopReason;
 

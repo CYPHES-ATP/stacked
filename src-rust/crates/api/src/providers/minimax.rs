@@ -5,8 +5,8 @@ use std::pin::Pin;
 
 use async_stream::stream;
 use async_trait::async_trait;
-use claurst_core::provider_id::{ModelId, ProviderId};
-use claurst_core::types::{ContentBlock, UsageInfo};
+use cyphes_core::provider_id::{ModelId, ProviderId};
+use cyphes_core::types::{ContentBlock, UsageInfo};
 use futures::Stream;
 use reqwest::{Client, header};
 use serde_json::Value;

@@ -1,5 +1,5 @@
 name: Feature request
-description: Propose a Stacked or CYPHES capability.
+description: Propose a CYPHES or CYPHES capability.
 title: "[Feature]: "
 labels:
   - enhancement
@@ -26,7 +26,7 @@ body:
         - Phase 1: CYPHES rebrand
         - Phase 1: runtime stabilization
         - Phase 1: permissions/receipts
-        - Phase 2: Stacked multi-agent workflow
+        - Phase 2: CYPHES multi-agent workflow
         - Later
     validations:
       required: true

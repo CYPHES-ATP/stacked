@@ -1,4 +1,4 @@
-//! Bridge between Claurst's synchronous `PermissionHandler` trait and the
+//! Bridge between CYPHES's synchronous `PermissionHandler` trait and the
 //! asynchronous `session/request_permission` JSON-RPC round-trip used by ACP.
 //!
 //! The handler itself simply returns `Ask { reason }` for every permission
@@ -12,9 +12,9 @@
 use std::sync::Arc;
 
 use agent_client_protocol_schema as acp;
-use claurst_core::permissions::{PermissionDecision, PermissionRequest};
-use claurst_core::PermissionHandler;
-use claurst_tools::{PendingPermissionStore, PendingPermissionRequest};
+use cyphes_core::permissions::{PermissionDecision, PermissionRequest};
+use cyphes_core::PermissionHandler;
+use cyphes_tools::{PendingPermissionStore, PendingPermissionRequest};
 use tracing::{debug, warn};
 
 use crate::connection::Connection;
@@ -124,7 +124,7 @@ pub async fn forward_pending(
     let _ = decision_tx.send(decision);
 }
 
-/// Classify a Claurst tool name into an ACP `ToolKind` for client UI hints.
+/// Classify a CYPHES tool name into an ACP `ToolKind` for client UI hints.
 fn infer_tool_kind(request: &PermissionRequest) -> acp::ToolKind {
     if request.is_read_only {
         return acp::ToolKind::Read;

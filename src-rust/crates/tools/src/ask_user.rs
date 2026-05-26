@@ -23,7 +23,7 @@ struct AskUserInput {
 #[async_trait]
 impl Tool for AskUserQuestionTool {
     fn name(&self) -> &str {
-        claurst_core::constants::TOOL_NAME_ASK_USER
+        cyphes_core::constants::TOOL_NAME_ASK_USER
     }
 
     fn description(&self) -> &str {

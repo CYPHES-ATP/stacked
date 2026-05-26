@@ -24,15 +24,15 @@ use crate::settings_screen::SettingsScreen;
 use crate::stats_dialog::StatsDialogState;
 use crate::theme_screen::ThemeScreen;
 use crate::{agents_view::{AgentInfo, AgentStatus, AgentsMenuState, AgentsRoute}, diff_viewer::DiffPane};
-use claurst_core::config::{Config, Settings, Theme};
-use claurst_core::cost::CostTracker;
-use claurst_core::file_history::FileHistory;
-use claurst_core::{sample_completion_verb, sample_spinner_verb};
-use claurst_core::keybindings::{
+use cyphes_core::config::{Config, Settings, Theme};
+use cyphes_core::cost::CostTracker;
+use cyphes_core::file_history::FileHistory;
+use cyphes_core::{sample_completion_verb, sample_spinner_verb};
+use cyphes_core::keybindings::{
     KeyContext, KeybindingResolver, KeybindingResult, ParsedKeystroke, UserKeybindings,
 };
-use claurst_core::types::{ContentBlock, Message, Role};
-use claurst_query::QueryEvent;
+use cyphes_core::types::{ContentBlock, Message, Role};
+use cyphes_query::QueryEvent;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
 use ratatui::backend::CrosstermBackend;
 use ratatui::style::Color;
@@ -57,7 +57,7 @@ const PROMPT_SLASH_COMMANDS: &[(&str, &str)] = &[
     ("diff", "Inspect the current git diff"),
     ("doctor", "Run diagnostics"),
     ("effort", "Set effort level (low/medium/high/max)"),
-    ("exit", "Quit Stacked"),
+    ("exit", "Quit CYPHES"),
     ("export", "Export conversation"),
     ("fast", "Toggle fast mode"),
     ("feedback", "Open session feedback survey"),
@@ -69,11 +69,11 @@ const PROMPT_SLASH_COMMANDS: &[(&str, &str)] = &[
     ("import-config", "Import CLAUDE.md and settings.json from ~/.claude"),
     ("init", "Initialize AGENTS.md for this project"),
     ("insights", "Generate a session analysis report with conversation statistics"),
-    ("install-slack-app", "Install the Stacked Slack integration"),
+    ("install-slack-app", "Install the CYPHES Slack integration"),
     ("keybindings", "Show keybinding configuration"),
     ("links", "Open URLs from this session in your browser"),
-    ("login", "Log in to Stacked"),
-    ("logout", "Log out of Stacked"),
+    ("login", "Log in to CYPHES"),
+    ("logout", "Log out of CYPHES"),
     ("managed-agents", "Configure manager-executor managed agent system"),
     ("mcp", "Browse configured MCP servers"),
     ("memory", "Browse and open AGENTS.md memory files"),
@@ -84,7 +84,7 @@ const PROMPT_SLASH_COMMANDS: &[(&str, &str)] = &[
     ("caveman", "Caveman speech mode — save big token"),
     ("rocky", "Rocky speech mode — amaze amaze amaze"),
     ("normal", "Deactivate speech mode"),
-    ("quit", "Exit Stacked"),
+    ("quit", "Exit CYPHES"),
     ("refresh", "Clear saved provider auth and model caches"),
     ("rename", "Rename this session"),
     ("resume", "Resume a previous session"),
@@ -816,7 +816,7 @@ pub struct App {
     /// Remote session URL (set when bridge connects; readable by commands).
     pub remote_session_url: Option<String>,
     /// Live MCP manager snapshot source when available.
-    pub mcp_manager: Option<Arc<claurst_mcp::McpManager>>,
+    pub mcp_manager: Option<Arc<cyphes_mcp::McpManager>>,
     /// Queued request for a real MCP reconnect from the interactive loop.
     pub pending_mcp_reconnect: bool,
     /// Pending MCP panel-auth request for the interactive loop.
@@ -910,10 +910,10 @@ pub struct App {
     /// When set, the main loop should spawn the async auth task for this provider.
     pub device_auth_pending: Option<String>,
     /// Shared provider registry for dynamic model fetching.
-    pub provider_registry: Option<std::sync::Arc<claurst_api::ProviderRegistry>>,
+    pub provider_registry: Option<std::sync::Arc<cyphes_api::ProviderRegistry>>,
     /// Model registry populated from models.dev — single source of truth for
     /// all provider models shown in the `/model` picker.
-    pub model_registry: claurst_api::ModelRegistry,
+    pub model_registry: cyphes_api::ModelRegistry,
     /// When `true`, the main event loop should spawn an async task to fetch
     /// the model list from the current provider's `list_models()` API.
     pub model_picker_fetch_pending: bool,
@@ -927,7 +927,7 @@ pub struct App {
     pub session_list_rx:
         Option<tokio::sync::mpsc::Receiver<Vec<crate::session_browser::SessionEntry>>>,
     /// Credential store for provider API keys and OAuth tokens.
-    pub auth_store: claurst_core::AuthStore,
+    pub auth_store: cyphes_core::AuthStore,
     /// Messages typed by the user while a query was streaming. They will be
     /// auto-submitted in order once the current turn completes (issue #149).
     pub queued_messages: std::collections::VecDeque<String>,
@@ -942,8 +942,8 @@ pub struct App {
     pub import_config_dialog: ImportConfigDialogState,
     /// Ctrl+K command palette overlay.
     pub command_palette: DialogSelectState,
-    /// Whether Stacked was launched from the user's home directory.
-    /// Shown as a startup notice: "Note: You have launched Stacked in your home directory..."
+    /// Whether CYPHES was launched from the user's home directory.
+    /// Shown as a startup notice: "Note: You have launched CYPHES in your home directory..."
     pub home_dir_warning: bool,
     /// Output style: "auto" | "stream" | "verbose".
     pub output_style: String,
@@ -973,11 +973,11 @@ pub struct App {
     // ---- Voice hold-to-talk ------------------------------------------------
 
     /// The global voice recorder, Some when voice is enabled in config.
-    pub voice_recorder: Option<Arc<Mutex<claurst_core::voice::VoiceRecorder>>>,
+    pub voice_recorder: Option<Arc<Mutex<cyphes_core::voice::VoiceRecorder>>>,
     /// True while recording is active (Alt+V toggled on).
     pub voice_recording: bool,
     /// Receiver for VoiceEvent messages produced by the recorder task.
-    pub voice_event_rx: Option<tokio::sync::mpsc::Receiver<claurst_core::voice::VoiceEvent>>,
+    pub voice_event_rx: Option<tokio::sync::mpsc::Receiver<cyphes_core::voice::VoiceEvent>>,
     /// A single key event that was drained from the queue during paste-burst
     /// detection but wasn't part of the burst (e.g. a modifier key that stopped
     /// the burst). Replayed at the top of the next loop iteration.
@@ -990,7 +990,7 @@ pub struct App {
     /// Receiver for `UserQuestionEvent`s produced by the AskUserQuestion tool.
     /// When a question arrives, `ask_user_dialog` is populated and shown.
     pub user_question_rx:
-        Option<tokio::sync::mpsc::UnboundedReceiver<claurst_tools::UserQuestionEvent>>,
+        Option<tokio::sync::mpsc::UnboundedReceiver<cyphes_tools::UserQuestionEvent>>,
     /// State for the model-initiated ask-user question dialog.
     pub ask_user_dialog: crate::ask_user_dialog::AskUserDialogState,
 
@@ -1085,7 +1085,7 @@ pub struct App {
     pub exit_key_sequence_start: Option<char>,
 }
 
-// Spinner verbs are now imported from claurst_core::spinner
+// Spinner verbs are now imported from cyphes_core::spinner
 
 /// Format a duration in milliseconds to a human-readable string.
 ///
@@ -1311,11 +1311,11 @@ impl App {
             device_auth_pending: None,
             provider_registry: None,
             model_registry: {
-                let mut reg = claurst_api::ModelRegistry::new();
+                let mut reg = cyphes_api::ModelRegistry::new();
                 // Try to load cached models.dev data from disk.
                 let cache_path = dirs::cache_dir()
                     .unwrap_or_else(|| std::path::PathBuf::from("."))
-                    .join("claurst")
+                    .join("cyphes")
                     .join("models.json");
                 reg.load_cache(&cache_path);
                 reg
@@ -1324,7 +1324,7 @@ impl App {
             model_picker_provider_id: None,
             session_list_pending: false,
             session_list_rx: None,
-            auth_store: claurst_core::AuthStore::load(),
+            auth_store: cyphes_core::AuthStore::load(),
             queued_messages: std::collections::VecDeque::new(),
             pending_auto_submit: false,
             connect_dialog: DialogSelectState::new("Connect a provider", provider_picker_items()),
@@ -1351,9 +1351,9 @@ impl App {
             current_dir: std::env::current_dir().ok().and_then(|p| {
                 p.to_str().map(|s| s.to_string())
             }),
-            git_branch: claurst_core::git_utils::get_repo_root(
+            git_branch: cyphes_core::git_utils::get_repo_root(
                 std::env::current_dir().as_deref().unwrap_or_else(|_| std::path::Path::new("."))
-            ).map(|repo_root| claurst_core::git_utils::get_current_branch(&repo_root)),
+            ).map(|repo_root| cyphes_core::git_utils::get_current_branch(&repo_root)),
             background_task_count: 0,
             background_task_status: None,
             status_line_override: None,
@@ -1362,13 +1362,13 @@ impl App {
             auto_compact_running: false,
             voice_recorder: {
                 // Check whether voice input has been enabled via the /voice command
-                // (stored in ~/.claurst/ui-settings.json).  We also accept
-                // CLAURST_VOICE_ENABLED=1 as an override for easier testing.
-                let voice_on = std::env::var("CLAURST_VOICE_ENABLED")
+                // (stored in ~/.cyphes/ui-settings.json).  We also accept
+                // CYPHES_VOICE_ENABLED=1 as an override for easier testing.
+                let voice_on = std::env::var("CYPHES_VOICE_ENABLED")
                     .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
                     .unwrap_or(false)
                     || {
-                        let path = claurst_core::config::Settings::config_dir()
+                        let path = cyphes_core::config::Settings::config_dir()
                             .join("ui-settings.json");
                         std::fs::read_to_string(&path)
                             .ok()
@@ -1377,7 +1377,7 @@ impl App {
                             .unwrap_or(false)
                     };
                 if voice_on {
-                    let recorder = claurst_core::voice::global_voice_recorder();
+                    let recorder = cyphes_core::voice::global_voice_recorder();
                     if let Ok(mut r) = recorder.lock() {
                         r.set_enabled(true);
                     }
@@ -1434,8 +1434,8 @@ impl App {
     /// Only enabled when the `token_budget` feature flag is active.
     #[cfg(feature = "token_budget")]
     fn load_token_budget() -> Option<u32> {
-        // First check CLAURST_TOKEN_BUDGET env var
-        if let Ok(budget_str) = std::env::var("CLAURST_TOKEN_BUDGET") {
+        // First check CYPHES_TOKEN_BUDGET env var
+        if let Ok(budget_str) = std::env::var("CYPHES_TOKEN_BUDGET") {
             if let Ok(budget) = budget_str.parse::<u32>() {
                 return Some(budget);
             }
@@ -1454,17 +1454,17 @@ impl App {
         self.import_config_picker.open();
     }
 
-    fn import_selection_from_picker(id: &str) -> Option<claurst_core::ImportSelection> {
+    fn import_selection_from_picker(id: &str) -> Option<cyphes_core::ImportSelection> {
         match id {
-            "claude-md" => Some(claurst_core::ImportSelection::ClaudeMd),
-            "settings" => Some(claurst_core::ImportSelection::Settings),
-            "both" => Some(claurst_core::ImportSelection::Both),
+            "claude-md" => Some(cyphes_core::ImportSelection::ClaudeMd),
+            "settings" => Some(cyphes_core::ImportSelection::Settings),
+            "both" => Some(cyphes_core::ImportSelection::Both),
             _ => None,
         }
     }
 
-    fn open_import_config_preview(&mut self, selection: claurst_core::ImportSelection) {
-        match claurst_core::build_import_preview(selection) {
+    fn open_import_config_preview(&mut self, selection: cyphes_core::ImportSelection) {
+        match cyphes_core::build_import_preview(selection) {
             Ok(preview) => {
                 self.import_config_dialog.open(preview);
             }
@@ -1479,12 +1479,12 @@ impl App {
             self.import_config_dialog.close();
             return;
         };
-        match claurst_core::execute_import(selection) {
+        match cyphes_core::execute_import(selection) {
             Ok(result) => {
-                let paths = claurst_core::ImportPaths::detect();
+                let paths = cyphes_core::ImportPaths::detect();
                 let new_settings = Settings::load_sync().unwrap_or_default();
                 let new_config = new_settings.effective_config();
-                let result_message = claurst_core::summarize_import_result(&result, &paths);
+                let result_message = cyphes_core::summarize_import_result(&result, &paths);
                 let imported_mcp = result.imported_fields.iter().any(|f| f == "mcpServers");
                 self.config = new_config.clone();
                 self.model_name = self.config.effective_model().to_string();
@@ -1492,10 +1492,10 @@ impl App {
                 self.refresh_context_window_size();
                 self.context_used_tokens = 0;
                 self.has_credentials = self.config.resolve_api_key().is_some();
-                self.auth_store = claurst_core::AuthStore::load();
+                self.auth_store = cyphes_core::AuthStore::load();
                 self.plan_mode = matches!(
                     self.config.permission_mode,
-                    claurst_core::config::PermissionMode::Plan
+                    cyphes_core::config::PermissionMode::Plan
                 );
                 self.output_style = match self.config.output_style.as_deref() {
                     Some("stream") => "stream".to_string(),
@@ -1627,7 +1627,7 @@ impl App {
 
         let cache_path = dirs::cache_dir()
             .unwrap_or_else(|| std::path::PathBuf::from("."))
-            .join("claurst")
+            .join("cyphes")
             .join("models.json");
         if cache_path.exists() {
             self.model_registry.load_cache(&cache_path);
@@ -1918,15 +1918,15 @@ impl App {
     pub fn apply_provider_refresh(
         &mut self,
         config: Config,
-        provider_registry: Option<std::sync::Arc<claurst_api::ProviderRegistry>>,
-        auth_store: claurst_core::AuthStore,
+        provider_registry: Option<std::sync::Arc<cyphes_api::ProviderRegistry>>,
+        auth_store: cyphes_core::AuthStore,
         has_credentials: bool,
         status_message: String,
     ) {
         self.close_secondary_views();
         self.config = config;
         self.provider_registry = provider_registry;
-        self.model_registry = claurst_api::ModelRegistry::new();
+        self.model_registry = cyphes_api::ModelRegistry::new();
         self.auth_store = auth_store;
         self.connect_dialog = DialogSelectState::new("Connect a provider", provider_picker_items());
         self.import_config_picker = DialogSelectState::new("Import config", import_config_picker_items());
@@ -2075,7 +2075,7 @@ impl App {
                 true
             }
             "plan" => {
-                use claurst_core::config::PermissionMode;
+                use cyphes_core::config::PermissionMode;
                 self.plan_mode = !self.plan_mode;
                 self.config.permission_mode = if self.plan_mode {
                     PermissionMode::Plan
@@ -2083,11 +2083,11 @@ impl App {
                     PermissionMode::Default
                 };
                 self.status_message = Some(if self.plan_mode {
-                    "Plan mode ON - Stacked will plan before acting.".to_string()
+                    "Plan mode ON - CYPHES will plan before acting.".to_string()
                 } else {
                     "Plan mode OFF.".to_string()
                 });
-                // Allow CLI path to also run (sends UserMessage to Stacked).
+                // Allow CLI path to also run (sends UserMessage to CYPHES).
                 false
             }
             "compact" => {
@@ -2161,7 +2161,7 @@ impl App {
                     self.voice_mode_notice.dismiss();
                     self.status_message = Some("Voice mode disabled.".to_string());
                 } else {
-                    let recorder = claurst_core::voice::global_voice_recorder();
+                    let recorder = cyphes_core::voice::global_voice_recorder();
                     if let Ok(mut r) = recorder.lock() {
                         r.set_enabled(true);
                     }
@@ -2205,7 +2205,7 @@ impl App {
             }
             "keybindings" => {
                 // Open the keybindings.json file in the external editor
-                let keybindings_path = claurst_core::config::Settings::config_dir().join("keybindings.json");
+                let keybindings_path = cyphes_core::config::Settings::config_dir().join("keybindings.json");
 
                 if let Err(e) = open_file_externally(&keybindings_path) {
                     eprintln!("Failed to open keybindings file: {}", e);
@@ -2369,20 +2369,20 @@ impl App {
                         .collect();
 
                     let (status, error_message) = match manager.server_status(&server.name) {
-                        claurst_mcp::McpServerStatus::Connected { .. } => {
+                        cyphes_mcp::McpServerStatus::Connected { .. } => {
                             (McpViewStatus::Connected, None)
                         }
-                        claurst_mcp::McpServerStatus::Connecting => {
+                        cyphes_mcp::McpServerStatus::Connecting => {
                             (McpViewStatus::Connecting, None)
                         }
-                        claurst_mcp::McpServerStatus::Disconnected { last_error } => {
+                        cyphes_mcp::McpServerStatus::Disconnected { last_error } => {
                             if last_error.is_some() {
                                 (McpViewStatus::Error, last_error)
                             } else {
                                 (McpViewStatus::Disconnected, None)
                             }
                         }
-                        claurst_mcp::McpServerStatus::Failed { error, .. } => {
+                        cyphes_mcp::McpServerStatus::Failed { error, .. } => {
                             (McpViewStatus::Error, Some(error))
                         }
                     };
@@ -2561,7 +2561,7 @@ impl App {
     /// appropriate.  Call this after updating `token_count`.
     pub fn check_token_warnings(&mut self) {
         let window =
-            claurst_query::context_window_for_model(&self.model_name) as u32;
+            cyphes_query::context_window_for_model(&self.model_name) as u32;
         if window == 0 {
             return;
         }
@@ -2752,7 +2752,7 @@ impl App {
         self.refresh_turn_diff_from_history();
     }
 
-    pub fn attach_mcp_manager(&mut self, mcp_manager: Arc<claurst_mcp::McpManager>) {
+    pub fn attach_mcp_manager(&mut self, mcp_manager: Arc<cyphes_mcp::McpManager>) {
         self.mcp_manager = Some(mcp_manager);
     }
 
@@ -2852,7 +2852,7 @@ impl App {
     /// Persist `has_completed_onboarding = true` to the settings file.
     /// Best-effort: failures are silently ignored to not disrupt the session.
     fn persist_onboarding_complete() -> anyhow::Result<()> {
-        let mut settings = claurst_core::config::Settings::load_sync()?;
+        let mut settings = cyphes_core::config::Settings::load_sync()?;
         settings.has_completed_onboarding = true;
         settings.save_sync()
     }
@@ -3007,13 +3007,13 @@ impl App {
                         let provider_name = self.device_auth_dialog.provider_name.clone();
                         let token = token.clone();
                         let credential = if provider_id == "github-copilot" {
-                            claurst_core::StoredCredential::OAuthToken {
+                            cyphes_core::StoredCredential::OAuthToken {
                                 access: token.clone(),
                                 refresh: token,
                                 expires: 0,
                             }
                         } else {
-                            claurst_core::StoredCredential::ApiKey { key: token }
+                            cyphes_core::StoredCredential::ApiKey { key: token }
                         };
                         self.auth_store.set(
                             &provider_id,
@@ -3088,7 +3088,7 @@ impl App {
                     if !api_key.is_empty() {
                         self.auth_store.set(
                             &provider_id,
-                            claurst_core::StoredCredential::ApiKey { key: api_key },
+                            cyphes_core::StoredCredential::ApiKey { key: api_key },
                         );
                         self.activate_provider(provider_id, provider_name, "Connected to");
                     }
@@ -3137,7 +3137,7 @@ impl App {
                         for (provider_id, key) in values {
                             self.auth_store.set(
                                 provider_id,
-                                claurst_core::StoredCredential::ApiKey { key },
+                                cyphes_core::StoredCredential::ApiKey { key },
                             );
                         }
                         self.activate_provider(
@@ -3181,7 +3181,7 @@ impl App {
                         self.persist_custom_provider_base_url(&base_url);
                         self.auth_store.set(
                             &provider_id,
-                            claurst_core::StoredCredential::ApiKey { key: api_key },
+                            cyphes_core::StoredCredential::ApiKey { key: api_key },
                         );
                         self.activate_provider(provider_id, provider_name, "Connected to");
                     } else {
@@ -3224,16 +3224,16 @@ impl App {
                             // "Free" composite mode — collects any subset of the
                             // free-tier upstreams (min 1; more = better availability).
                             "free" => {
-                                let existing: Vec<(&'static str, String)> = claurst_api::FREE_CATALOG
+                                let existing: Vec<(&'static str, String)> = cyphes_api::FREE_CATALOG
                                     .iter()
                                     .filter_map(|upstream| {
                                         let key = match upstream.id {
                                             "opencode-zen" => self
                                                 .auth_store
-                                                .api_key_for(claurst_core::ProviderId::OPENCODE_ZEN)
+                                                .api_key_for(cyphes_core::ProviderId::OPENCODE_ZEN)
                                                 .or_else(|| {
                                                     self.auth_store.api_key_for(
-                                                        claurst_core::ProviderId::OPENCODE_GO,
+                                                        cyphes_core::ProviderId::OPENCODE_GO,
                                                     )
                                                 }),
                                             other => self.auth_store.api_key_for(other),
@@ -3246,7 +3246,7 @@ impl App {
                             }
                             "anthropic" => {
                                 // Anthropic: use API key from console.anthropic.com
-                                // (OAuth requires a registered app which Claurst doesn't have)
+                                // (OAuth requires a registered app which CYPHES doesn't have)
                                 self.key_input_dialog.open(selected.id.clone(), selected.title.clone());
                             }
                             "custom-openai" => {
@@ -4185,7 +4185,7 @@ impl App {
             // Default → AcceptEdits → BypassPermissions → Default
             // Mirrors TS bottom-left indicator cycling behaviour.
             KeyCode::BackTab if !self.is_streaming => {
-                use claurst_core::config::PermissionMode;
+                use cyphes_core::config::PermissionMode;
                 self.config.permission_mode = match self.config.permission_mode {
                     PermissionMode::Default => PermissionMode::AcceptEdits,
                     PermissionMode::AcceptEdits => PermissionMode::BypassPermissions,
@@ -4931,7 +4931,7 @@ impl App {
             }
             "reverseIndent" => {
                 // Shift+Tab: Reverse indent (cycle permission mode)
-                use claurst_core::config::PermissionMode;
+                use cyphes_core::config::PermissionMode;
                 self.config.permission_mode = match self.config.permission_mode {
                     PermissionMode::Default => PermissionMode::AcceptEdits,
                     PermissionMode::AcceptEdits => PermissionMode::BypassPermissions,
@@ -5880,15 +5880,15 @@ impl App {
                 }
                 self.is_streaming = true;
                 match stream_evt {
-                    claurst_api::AnthropicStreamEvent::ContentBlockDelta { delta, .. } => {
+                    cyphes_api::AnthropicStreamEvent::ContentBlockDelta { delta, .. } => {
                         // Reset stall timer on any incoming delta — we're making progress.
                         self.stall_start = None;
                         match delta {
-                            claurst_api::streaming::ContentDelta::TextDelta { text } => {
+                            cyphes_api::streaming::ContentDelta::TextDelta { text } => {
                                 self.streaming_text.push_str(&text);
                                 self.invalidate_transcript();
                             }
-                            claurst_api::streaming::ContentDelta::ThinkingDelta { thinking } => {
+                            cyphes_api::streaming::ContentDelta::ThinkingDelta { thinking } => {
                                 debug!(len = thinking.len(), "Thinking delta received");
                                 self.streaming_thinking.push_str(&thinking);
                                 self.invalidate_transcript();
@@ -5896,7 +5896,7 @@ impl App {
                             _ => {}
                         }
                     }
-                    claurst_api::AnthropicStreamEvent::MessageStop => {
+                    cyphes_api::AnthropicStreamEvent::MessageStop => {
                         self.is_streaming = false;
                         self.spinner_verb = None;
                         self.stall_start = None;
@@ -6015,7 +6015,7 @@ impl App {
             }
             QueryEvent::TokenWarning { state, pct_used } => {
                 // Push a notification for context window warnings (notification + threshold tracking).
-                use claurst_query::compact::TokenWarningState;
+                use cyphes_query::compact::TokenWarningState;
 
                 // Only escalate — never repeat a threshold already shown.
                 match state {
@@ -6082,7 +6082,7 @@ impl App {
                 let (tx, rx) = tokio::sync::mpsc::channel(1);
                 self.session_list_rx = Some(rx);
                 tokio::spawn(async move {
-                    let sessions = claurst_core::history::list_sessions().await;
+                    let sessions = cyphes_core::history::list_sessions().await;
                     let entries: Vec<crate::session_browser::SessionEntry> = sessions
                         .into_iter()
                         .map(|s| {
@@ -6115,7 +6115,7 @@ impl App {
             // TranscriptReady event we insert the text directly into the
             // prompt so the user can review and submit it.
             {
-                use claurst_core::voice::VoiceEvent;
+                use cyphes_core::voice::VoiceEvent;
                 let mut events = Vec::new();
                 if let Some(ref mut rx) = self.voice_event_rx {
                     while let Ok(ev) = rx.try_recv() {
@@ -6396,7 +6396,7 @@ mod tests {
 
     fn make_app() -> App {
         let config = Config::default();
-        let cost_tracker = claurst_core::cost::CostTracker::new();
+        let cost_tracker = cyphes_core::cost::CostTracker::new();
         App::new(config, cost_tracker)
     }
 

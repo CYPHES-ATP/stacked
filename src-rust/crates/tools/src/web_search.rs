@@ -27,7 +27,7 @@ fn default_num_results() -> usize {
 #[async_trait]
 impl Tool for WebSearchTool {
     fn name(&self) -> &str {
-        claurst_core::constants::TOOL_NAME_WEB_SEARCH
+        cyphes_core::constants::TOOL_NAME_WEB_SEARCH
     }
 
     fn description(&self) -> &str {
@@ -145,7 +145,7 @@ async fn search_duckduckgo(query: &str, num_results: usize) -> ToolResult {
 
     let resp = match client
         .get(&url)
-        .header("User-Agent", "Claurst/1.0")
+        .header("User-Agent", "CYPHES/1.0")
         .send()
         .await
     {

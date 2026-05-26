@@ -14,7 +14,7 @@
 //! Layout:
 //!
 //! ```text
-//! ~/.claurst/
+//! ~/.cyphes/
 //!   accounts.json                              # registry (this module)
 //!   accounts/
 //!     anthropic/<profile-id>/oauth_tokens.json
@@ -84,7 +84,7 @@ pub struct ProviderAccounts {
     pub profiles: BTreeMap<String, AccountProfile>,
 }
 
-/// On-disk shape of `~/.claurst/accounts.json`.
+/// On-disk shape of `~/.cyphes/accounts.json`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AccountRegistry {
     /// Schema version (current: 1).
@@ -100,9 +100,9 @@ fn default_version() -> u32 {
 }
 
 impl AccountRegistry {
-    /// Path to `~/.claurst/accounts.json`.
+    /// Path to `~/.cyphes/accounts.json`.
     pub fn path() -> PathBuf {
-        claurst_dir().join("accounts.json")
+        cyphes_dir().join("accounts.json")
     }
 
     /// Load the registry. Returns an empty registry if the file is missing or
@@ -249,14 +249,14 @@ pub fn ensure_unique_profile_id(
     }
 }
 
-/// `~/.claurst/`.
-pub fn claurst_dir() -> PathBuf {
-    dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join(".claurst")
+/// `~/.cyphes/`.
+pub fn cyphes_dir() -> PathBuf {
+    dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join(".cyphes")
 }
 
-/// `~/.claurst/accounts/<provider>/<id>/`.
+/// `~/.cyphes/accounts/<provider>/<id>/`.
 pub fn account_dir(provider: &str, id: &str) -> PathBuf {
-    claurst_dir().join("accounts").join(provider).join(id)
+    cyphes_dir().join("accounts").join(provider).join(id)
 }
 
 /// File where the per-account Anthropic OAuth tokens live.
@@ -271,7 +271,7 @@ pub fn codex_token_path(profile_id: &str) -> PathBuf {
 
 /// Backup directory for the previous live token file (rotated on each switch).
 pub fn backup_dir(provider: &str) -> PathBuf {
-    claurst_dir().join("accounts").join(provider).join(".backups")
+    cyphes_dir().join("accounts").join(provider).join(".backups")
 }
 
 fn now_iso() -> String {
@@ -430,7 +430,7 @@ mod tests {
     }
 
     #[test]
-    fn account_paths_are_under_claurst_dir() {
+    fn account_paths_are_under_cyphes_dir() {
         let p = anthropic_token_path("work");
         assert!(p.ends_with("accounts/anthropic/work/oauth_tokens.json"));
         let c = codex_token_path("personal");

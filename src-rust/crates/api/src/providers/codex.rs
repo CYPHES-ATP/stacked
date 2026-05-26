@@ -4,13 +4,13 @@
 //   https://chatgpt.com/backend-api/codex/responses
 //
 // Auth: Bearer token obtained via the Codex OAuth flow stored in
-//   ~/.claurst/codex_tokens.json (`CodexTokens` struct).
+//   ~/.cyphes/codex_tokens.json (`CodexTokens` struct).
 //
 // Token refresh: if `expires_at` is in the past we POST to the OpenAI token
 //   endpoint with `grant_type=refresh_token` before making the request.
 //
 // Model list: static — the Codex endpoint does not expose a /models route,
-//   so we use the `CODEX_MODELS` constant from `claurst-core`.
+//   so we use the `CODEX_MODELS` constant from `cyphes-core`.
 
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
@@ -18,12 +18,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use async_stream::stream;
 use async_trait::async_trait;
-use claurst_core::codex_oauth::{
+use cyphes_core::codex_oauth::{
     CODEX_API_ENDPOINT, CODEX_MODELS, CODEX_TOKEN_URL, DEFAULT_CODEX_MODEL,
 };
-use claurst_core::oauth_config::{get_codex_tokens, save_codex_tokens, CodexTokens};
-use claurst_core::provider_id::{ModelId, ProviderId};
-use claurst_core::types::UsageInfo;
+use cyphes_core::oauth_config::{get_codex_tokens, save_codex_tokens, CodexTokens};
+use cyphes_core::provider_id::{ModelId, ProviderId};
+use cyphes_core::types::UsageInfo;
 use futures::{Stream, StreamExt};
 use serde_json::{json, Value};
 use tracing::{debug, warn};
@@ -119,7 +119,7 @@ impl CodexProvider {
     async fn refresh_token(&self, refresh_token: &str) -> Result<String, ProviderError> {
         let body = json!({
             "grant_type": "refresh_token",
-            "client_id": claurst_core::codex_oauth::CODEX_CLIENT_ID,
+            "client_id": cyphes_core::codex_oauth::CODEX_CLIENT_ID,
             "refresh_token": refresh_token,
         });
 
@@ -226,7 +226,7 @@ impl CodexProvider {
     ) -> reqwest::RequestBuilder {
         let builder = builder
             .bearer_auth(token)
-            .header("User-Agent", concat!("claurst/", env!("CARGO_PKG_VERSION")));
+            .header("User-Agent", concat!("cyphes/", env!("CARGO_PKG_VERSION")));
 
         if let Some(id) = account_id {
             builder.header("ChatGPT-Account-Id", id)
@@ -406,7 +406,7 @@ impl CodexProvider {
         provider_id: &ProviderId,
         json_val: &Value,
     ) -> Result<ProviderResponse, ProviderError> {
-        use claurst_core::types::ContentBlock;
+        use cyphes_core::types::ContentBlock;
 
         let id = json_val
             .get("id")
@@ -694,7 +694,7 @@ impl LlmProvider for CodexProvider {
                                             if open_blocks.insert(output_index) {
                                                 yield Ok(StreamEvent::ContentBlockStart {
                                                     index: output_index,
-                                                    content_block: claurst_core::types::ContentBlock::ToolUse {
+                                                    content_block: cyphes_core::types::ContentBlock::ToolUse {
                                                         id: call_id,
                                                         name,
                                                         input: json!({}),
@@ -724,7 +724,7 @@ impl LlmProvider for CodexProvider {
                                         if open_blocks.insert(output_index) {
                                             yield Ok(StreamEvent::ContentBlockStart {
                                                 index: output_index,
-                                                content_block: claurst_core::types::ContentBlock::Text {
+                                                content_block: cyphes_core::types::ContentBlock::Text {
                                                     text: String::new(),
                                                 },
                                             });
@@ -752,7 +752,7 @@ impl LlmProvider for CodexProvider {
                                 if open_blocks.insert(output_index) {
                                     yield Ok(StreamEvent::ContentBlockStart {
                                         index: output_index,
-                                        content_block: claurst_core::types::ContentBlock::Text {
+                                        content_block: cyphes_core::types::ContentBlock::Text {
                                             text: String::new(),
                                         },
                                     });

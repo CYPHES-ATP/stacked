@@ -1,13 +1,13 @@
-// claurst-commands: Slash command system for Claurst.
+// cyphes-commands: Slash command system for CYPHES.
 //
 // This crate implements the /command framework that allows users to type
 // commands like /help, /compact, /clear, /model, /config, /cost, etc.
 // Each command is a struct implementing the `SlashCommand` trait.
 
 use async_trait::async_trait;
-use claurst_core::config::{Config, Settings, Theme};
-use claurst_core::cost::CostTracker;
-use claurst_core::types::{ContentBlock, Message};
+use cyphes_core::config::{Config, Settings, Theme};
+use cyphes_core::cost::CostTracker;
+use cyphes_core::types::{ContentBlock, Message};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 #[allow(unused_imports)]
@@ -29,9 +29,9 @@ pub struct CommandContext {
     pub remote_session_url: Option<String>,
     // Note: config already contains hooks, mcp_servers, etc.
     /// Live MCP manager — present when servers are connected.
-    pub mcp_manager: Option<Arc<claurst_mcp::McpManager>>,
+    pub mcp_manager: Option<Arc<cyphes_mcp::McpManager>>,
     /// Optional callback for starting an MCP OAuth flow in the background.
-    pub mcp_auth_runner: Option<Arc<dyn Fn(claurst_mcp::oauth::McpAuthSession) + Send + Sync>>,
+    pub mcp_auth_runner: Option<Arc<dyn Fn(cyphes_mcp::oauth::McpAuthSession) + Send + Sync>>,
 }
 
 /// Result of running a slash command.
@@ -59,7 +59,7 @@ pub enum CommandResult {
     /// Replace the conversation with a specific message list (used by /rewind).
     SetMessages(Vec<Message>),
     /// Load a previously saved session into the live REPL.
-    ResumeSession(claurst_core::history::ConversationSession),
+    ResumeSession(cyphes_core::history::ConversationSession),
     /// Update the current session title.
     RenameSession(String),
     /// Trigger the OAuth login flow (handled by the REPL in main.rs).
@@ -68,7 +68,7 @@ pub enum CommandResult {
     /// Trigger the OAuth login flow for a specific provider with optional
     /// human-friendly label for the new account profile.
     ///
-    /// `provider` is one of `claurst_core::accounts::PROVIDER_ANTHROPIC` or
+    /// `provider` is one of `cyphes_core::accounts::PROVIDER_ANTHROPIC` or
     /// `PROVIDER_CODEX`. `login_with_claude_ai` is only meaningful for
     /// Anthropic.
     StartLoginForProvider {
@@ -152,7 +152,7 @@ fn provider_lookup_ids(provider_id: &str) -> Vec<&str> {
 
 fn resolve_fast_model_id(config: &Config) -> String {
     let provider_id = config.selected_provider_id();
-    let registry = claurst_api::ModelRegistry::new();
+    let registry = cyphes_api::ModelRegistry::new();
 
     provider_lookup_ids(provider_id)
         .into_iter()
@@ -160,11 +160,11 @@ fn resolve_fast_model_id(config: &Config) -> String {
         .unwrap_or_else(|| stripped_model_for_provider(provider_id, config.effective_model()).to_string())
 }
 
-async fn provider_for_config(config: &Config) -> Option<std::sync::Arc<dyn claurst_api::LlmProvider>> {
+async fn provider_for_config(config: &Config) -> Option<std::sync::Arc<dyn cyphes_api::LlmProvider>> {
     let anthropic_auth = config.resolve_anthropic_auth_async().await;
-    let registry = claurst_api::ProviderRegistry::from_config(
+    let registry = cyphes_api::ProviderRegistry::from_config(
         config,
-        claurst_api::client::ClientConfig {
+        cyphes_api::client::ClientConfig {
             api_key: anthropic_auth
                 .as_ref()
                 .map(|(credential, _)| credential.clone())
@@ -179,7 +179,7 @@ async fn provider_for_config(config: &Config) -> Option<std::sync::Arc<dyn claur
 
     provider_lookup_ids(config.selected_provider_id())
         .into_iter()
-        .find_map(|lookup_id| registry.get(&claurst_core::ProviderId::new(lookup_id)).cloned())
+        .find_map(|lookup_id| registry.get(&cyphes_core::ProviderId::new(lookup_id)).cloned())
 }
 
 fn text_from_content_blocks(blocks: &[ContentBlock]) -> String {
@@ -356,7 +356,7 @@ fn open_with_system(target: &str) -> std::io::Result<()> {
     }
 }
 
-fn format_keystroke(keystroke: &claurst_core::keybindings::ParsedKeystroke) -> String {
+fn format_keystroke(keystroke: &cyphes_core::keybindings::ParsedKeystroke) -> String {
     let mut parts = Vec::new();
     if keystroke.ctrl {
         parts.push("ctrl".to_string());
@@ -377,7 +377,7 @@ fn format_keystroke(keystroke: &claurst_core::keybindings::ParsedKeystroke) -> S
     parts.join("+")
 }
 
-fn format_chord(chord: &[claurst_core::keybindings::ParsedKeystroke]) -> String {
+fn format_chord(chord: &[cyphes_core::keybindings::ParsedKeystroke]) -> String {
     chord
         .iter()
         .map(format_keystroke)
@@ -387,9 +387,9 @@ fn format_chord(chord: &[claurst_core::keybindings::ParsedKeystroke]) -> String 
 
 fn generate_keybindings_template() -> anyhow::Result<String> {
     let mut grouped: BTreeMap<String, BTreeMap<String, Option<String>>> = BTreeMap::new();
-    for binding in claurst_core::keybindings::default_bindings() {
+    for binding in cyphes_core::keybindings::default_bindings() {
         let chord = format_chord(&binding.chord);
-        if claurst_core::keybindings::NON_REBINDABLE.contains(&chord.as_str()) {
+        if cyphes_core::keybindings::NON_REBINDABLE.contains(&chord.as_str()) {
             continue;
         }
         grouped
@@ -428,7 +428,7 @@ fn current_output_style_name(config: &Config) -> &str {
 }
 
 fn available_output_style_names() -> Vec<String> {
-    claurst_core::output_styles::all_styles(&Settings::config_dir())
+    cyphes_core::output_styles::all_styles(&Settings::config_dir())
         .into_iter()
         .map(|style| style.name)
         .collect()
@@ -582,7 +582,7 @@ impl SlashCommand for HelpCommand {
                 .push(format!("  /{:<20} {}", format!("{}{}", cmd.name(), alias_str), cmd.description()));
         }
 
-        let mut output = String::from("Claurst — Slash Commands\n");
+        let mut output = String::from("CYPHES — Slash Commands\n");
         output.push_str("════════════════════════════\n");
 
         for cat in &category_order {
@@ -654,7 +654,7 @@ impl SlashCommand for CostCommand {
     async fn execute(&self, _args: &str, ctx: &mut CommandContext) -> CommandResult {
         let tracker = &ctx.cost_tracker;
         let model = ctx.config.effective_model();
-        let pricing = claurst_core::cost::ModelPricing::for_model(model);
+        let pricing = cyphes_core::cost::ModelPricing::for_model(model);
 
         let input = tracker.input_tokens();
         let output = tracker.output_tokens();
@@ -724,7 +724,7 @@ impl SlashCommand for CostCommand {
 impl SlashCommand for ExitCommand {
     fn name(&self) -> &str { "exit" }
     fn aliases(&self) -> Vec<&str> { vec!["quit", "q"] }
-    fn description(&self) -> &str { "Exit Claurst" }
+    fn description(&self) -> &str { "Exit CYPHES" }
 
     async fn execute(&self, _args: &str, _ctx: &mut CommandContext) -> CommandResult {
         CommandResult::Exit
@@ -935,14 +935,14 @@ impl SlashCommand for ConfigCommand {
             }
             "permission-mode" | "permission_mode" => {
                 let mode = match value.trim().to_lowercase().as_str() {
-                    "default" => claurst_core::config::PermissionMode::Default,
+                    "default" => cyphes_core::config::PermissionMode::Default,
                     "accept-edits" | "accept_edits" => {
-                        claurst_core::config::PermissionMode::AcceptEdits
+                        cyphes_core::config::PermissionMode::AcceptEdits
                     }
                     "bypass-permissions" | "bypass_permissions" => {
-                        claurst_core::config::PermissionMode::BypassPermissions
+                        cyphes_core::config::PermissionMode::BypassPermissions
                     }
-                    "plan" => claurst_core::config::PermissionMode::Plan,
+                    "plan" => cyphes_core::config::PermissionMode::Plan,
                     _ => {
                         return CommandResult::Error(
                             "Permission mode must be one of: default, accept-edits, bypass-permissions, plan"
@@ -980,7 +980,7 @@ impl SlashCommand for ColorCommand {
          Named colors: red, green, blue, yellow, cyan, magenta, white, orange, purple\n\
          Hex codes:    #RGB or #RRGGBB\n\
          Reset:        /color default\n\n\
-         The color is persisted to ~/.claurst/ui-settings.json and\n\
+         The color is persisted to ~/.cyphes/ui-settings.json and\n\
          applied on the next REPL startup."
     }
 
@@ -1129,7 +1129,7 @@ impl SlashCommand for OutputStyleCommand {
 #[async_trait]
 impl SlashCommand for KeybindingsCommand {
     fn name(&self) -> &str { "keybindings" }
-    fn description(&self) -> &str { "Create or open ~/.claurst/keybindings.json" }
+    fn description(&self) -> &str { "Create or open ~/.cyphes/keybindings.json" }
 
     async fn execute(&self, _args: &str, _ctx: &mut CommandContext) -> CommandResult {
         let config_dir = Settings::config_dir();
@@ -1195,7 +1195,7 @@ impl SlashCommand for KeybindingsCommand {
 #[async_trait]
 impl SlashCommand for PrivacySettingsCommand {
     fn name(&self) -> &str { "privacy-settings" }
-    fn description(&self) -> &str { "Open Claurst privacy settings" }
+    fn description(&self) -> &str { "Open CYPHES privacy settings" }
 
     async fn execute(&self, _args: &str, _ctx: &mut CommandContext) -> CommandResult {
         let url = "https://claude.ai/settings/data-privacy-controls";
@@ -1217,8 +1217,8 @@ impl SlashCommand for VersionCommand {
 
     async fn execute(&self, _args: &str, _ctx: &mut CommandContext) -> CommandResult {
         CommandResult::Message(format!(
-            "Claurst v{}",
-            claurst_core::constants::APP_VERSION
+            "CYPHES v{}",
+            cyphes_core::constants::APP_VERSION
         ))
     }
 }
@@ -1233,12 +1233,12 @@ impl SlashCommand for ResumeCommand {
 
     async fn execute(&self, args: &str, _ctx: &mut CommandContext) -> CommandResult {
         if args.is_empty() {
-            let sessions = claurst_core::history::list_sessions().await;
+            let sessions = cyphes_core::history::list_sessions().await;
             if sessions.is_empty() {
                 return CommandResult::Message("No previous sessions found.".to_string());
             }
             let last = &sessions[0];
-            match claurst_core::history::load_session(&last.id).await {
+            match cyphes_core::history::load_session(&last.id).await {
                 Ok(session) => CommandResult::ResumeSession(session),
                 Err(e) => CommandResult::Error(format!(
                     "Failed to load session {}: {}",
@@ -1246,7 +1246,7 @@ impl SlashCommand for ResumeCommand {
                 )),
             }
         } else {
-            match claurst_core::history::load_session(args.trim()).await {
+            match cyphes_core::history::load_session(args.trim()).await {
                 Ok(session) => CommandResult::ResumeSession(session),
                 Err(e) => CommandResult::Error(format!(
                     "Failed to load session {}: {}",
@@ -1267,7 +1267,7 @@ impl SlashCommand for StatusCommand {
 
     async fn execute(&self, _args: &str, ctx: &mut CommandContext) -> CommandResult {
         // Auth status
-        let auth_status = match claurst_core::oauth::OAuthTokens::load().await {
+        let auth_status = match cyphes_core::oauth::OAuthTokens::load().await {
             Some(tokens) => {
                 let sub = tokens.subscription_type.as_deref().unwrap_or("oauth");
                 format!("Authenticated ({})", sub)
@@ -1307,7 +1307,7 @@ impl SlashCommand for StatusCommand {
             .unwrap_or_else(|_| "n/a".to_string());
 
         CommandResult::Message(format!(
-            "Claurst Status\n\
+            "CYPHES Status\n\
              ══════════════════\n\
              Auth:           {auth_status}\n\
              Model:          {model}\n\
@@ -1449,8 +1449,8 @@ impl SlashCommand for GoalCommand {
          /goal resume                   — resume a paused goal\n\
          /goal clear                    — delete the current goal\n\
          /goal complete                 — request a completion audit\n\n\
-         Goals let Claurst work autonomously across turns toward a single\n\
-         verifiable objective. Claurst will keep iterating until the goal is\n\
+         Goals let CYPHES work autonomously across turns toward a single\n\
+         verifiable objective. CYPHES will keep iterating until the goal is\n\
          complete, you pause it, or the 200-turn runaway guard fires.\n\n\
          Examples:\n\
          /goal Migrate the project from Express to Fastify, keeping all routes passing\n\
@@ -1458,9 +1458,9 @@ impl SlashCommand for GoalCommand {
     }
 
     async fn execute(&self, args: &str, ctx: &mut CommandContext) -> CommandResult {
-        if !claurst_core::goals_enabled() {
+        if !cyphes_core::goals_enabled() {
             return CommandResult::Message(
-                "Goals are disabled. Unset CLAURST_GOALS=0 (or remove it) to re-enable.".to_string(),
+                "Goals are disabled. Unset CYPHES_GOALS=0 (or remove it) to re-enable.".to_string(),
             );
         }
 
@@ -1477,17 +1477,17 @@ impl SlashCommand for GoalCommand {
                 };
                 match store.get_goal(session_id) {
                     None => return CommandResult::Message("No active goal.".to_string()),
-                    Some(g) if g.status == claurst_core::GoalStatus::Complete => {
+                    Some(g) if g.status == cyphes_core::GoalStatus::Complete => {
                         return CommandResult::Message("Goal is already complete.".to_string());
                     }
-                    Some(g) if g.status == claurst_core::GoalStatus::Paused => {
+                    Some(g) if g.status == cyphes_core::GoalStatus::Paused => {
                         return CommandResult::Message(
                             "Goal is already paused. Use /goal resume to continue.".to_string(),
                         );
                     }
                     _ => {}
                 }
-                if let Err(e) = store.set_status(session_id, claurst_core::GoalStatus::Paused) {
+                if let Err(e) = store.set_status(session_id, cyphes_core::GoalStatus::Paused) {
                     return CommandResult::Error(format!("Failed to pause goal: {}", e));
                 }
                 return CommandResult::Message("Goal paused. Use /goal resume to continue.".to_string());
@@ -1499,20 +1499,20 @@ impl SlashCommand for GoalCommand {
                 };
                 match store.get_goal(session_id) {
                     None => return CommandResult::Message("No goal to resume.".to_string()),
-                    Some(g) if g.status == claurst_core::GoalStatus::Active => {
+                    Some(g) if g.status == cyphes_core::GoalStatus::Active => {
                         return CommandResult::Message("Goal is already active.".to_string());
                     }
-                    Some(g) if g.status == claurst_core::GoalStatus::Complete => {
+                    Some(g) if g.status == cyphes_core::GoalStatus::Complete => {
                         return CommandResult::Message(
                             "Goal is complete. Use /goal <objective> to set a new one.".to_string(),
                         );
                     }
                     _ => {}
                 }
-                if let Err(e) = store.set_status(session_id, claurst_core::GoalStatus::Active) {
+                if let Err(e) = store.set_status(session_id, cyphes_core::GoalStatus::Active) {
                     return CommandResult::Error(format!("Failed to resume goal: {}", e));
                 }
-                return CommandResult::Message("Goal resumed. Claurst will continue on the next message.".to_string());
+                return CommandResult::Message("Goal resumed. CYPHES will continue on the next message.".to_string());
             }
             "clear" => {
                 let store = match open_goal_store() {
@@ -1581,7 +1581,7 @@ impl SlashCommand for GoalCommand {
         };
 
         match store.set_goal(session_id, objective, token_budget) {
-            Err(claurst_core::GoalError::ObjectiveTooLong { len, max }) => {
+            Err(cyphes_core::GoalError::ObjectiveTooLong { len, max }) => {
                 CommandResult::Error(format!(
                     "Objective too long ({} chars). Max {} chars.",
                     len, max
@@ -1592,14 +1592,14 @@ impl SlashCommand for GoalCommand {
                 // Return UserMessage so the query loop fires immediately and the
                 // model begins working toward the goal without user needing to
                 // send another message.
-                CommandResult::UserMessage(claurst_core::goal_kickoff_message(&goal))
+                CommandResult::UserMessage(cyphes_core::goal_kickoff_message(&goal))
             }
         }
     }
 }
 
-fn open_goal_store() -> Option<claurst_core::GoalStore> {
-    claurst_core::GoalStore::open_default()
+fn open_goal_store() -> Option<cyphes_core::GoalStore> {
+    cyphes_core::GoalStore::open_default()
 }
 
 fn goal_status(session_id: &str) -> CommandResult {
@@ -1641,33 +1641,33 @@ impl SlashCommand for MemoryCommand {
     fn description(&self) -> &str { "View, edit, or clear AGENTS.md memory files" }
     fn help(&self) -> &str {
         "Usage: /memory [edit|clear] [global]\n\n\
-         Shows the content of AGENTS.md files that provide project context to Claurst.\n\
-         Claurst reads these files automatically at session start.\n\n\
+         Shows the content of AGENTS.md files that provide project context to CYPHES.\n\
+         CYPHES reads these files automatically at session start.\n\n\
          Subcommands:\n\
            /memory              — show all AGENTS.md files\n\
            /memory edit         — open project AGENTS.md in your editor\n\
-           /memory edit global  — open global ~/.claurst/AGENTS.md in your editor\n\
+           /memory edit global  — open global ~/.cyphes/AGENTS.md in your editor\n\
            /memory clear        — clear the project AGENTS.md\n\
-           /memory clear global — clear the global ~/.claurst/AGENTS.md\n\n\
+           /memory clear global — clear the global ~/.cyphes/AGENTS.md\n\n\
          Locations checked (in priority order):\n\
-           1. <project>/.claurst/AGENTS.md\n\
+           1. <project>/.cyphes/AGENTS.md\n\
            2. <project>/AGENTS.md\n\
-           3. ~/.claurst/AGENTS.md  (global)\n\n\
+           3. ~/.cyphes/AGENTS.md  (global)\n\n\
          Use /init to create a new AGENTS.md from a template."
     }
 
     async fn execute(&self, args: &str, ctx: &mut CommandContext) -> CommandResult {
-        let project_claude_dir = ctx.working_dir.join(".claurst").join("AGENTS.md");
+        let project_claude_dir = ctx.working_dir.join(".cyphes").join("AGENTS.md");
         let project_root = ctx.working_dir.join("AGENTS.md");
         let global_path = dirs::home_dir()
             .unwrap_or_default()
-            .join(".claurst")
+            .join(".cyphes")
             .join("AGENTS.md");
 
         let locations = [
-            ("project (.claurst/AGENTS.md)", project_claude_dir.clone()),
+            ("project (.cyphes/AGENTS.md)", project_claude_dir.clone()),
             ("project (AGENTS.md)", project_root.clone()),
-            ("global (~/.claurst/AGENTS.md)", global_path.clone()),
+            ("global (~/.cyphes/AGENTS.md)", global_path.clone()),
         ];
 
         let cmd = args.trim();
@@ -1737,10 +1737,10 @@ impl SlashCommand for MemoryCommand {
         if cmd == "clear" || cmd.starts_with("clear ") {
             let target_hint = cmd.strip_prefix("clear").map(|s| s.trim()).unwrap_or("project");
             let (label, target) = match target_hint {
-                "global" => ("global (~/.claurst/AGENTS.md)", global_path.clone()),
+                "global" => ("global (~/.cyphes/AGENTS.md)", global_path.clone()),
                 _ => {
                     if project_claude_dir.exists() {
-                        ("project (.claurst/AGENTS.md)", project_claude_dir.clone())
+                        ("project (.cyphes/AGENTS.md)", project_claude_dir.clone())
                     } else {
                         ("project (AGENTS.md)", project_root.clone())
                     }
@@ -1755,7 +1755,7 @@ impl SlashCommand for MemoryCommand {
             return match tokio::fs::write(&target, "").await {
                 Ok(_) => CommandResult::Message(format!(
                     "Cleared {} memory file at {}.\n\
-                     Claurst will no longer see this content at session start.",
+                     CYPHES will no longer see this content at session start.",
                     label,
                     target.display()
                 )),
@@ -1809,7 +1809,7 @@ impl SlashCommand for MemoryCommand {
             output.push_str(
                 "\nSubcommands:\n\
                  /memory edit          — edit project AGENTS.md\n\
-                 /memory edit global   — edit global ~/.claurst/AGENTS.md\n\
+                 /memory edit global   — edit global ~/.cyphes/AGENTS.md\n\
                  /memory clear         — clear project AGENTS.md\n\
                  /memory clear global  — clear global AGENTS.md"
             );
@@ -1825,7 +1825,7 @@ impl SlashCommand for MemoryCommand {
 impl SlashCommand for BugCommand {
     fn name(&self) -> &str { "feedback" }
     fn aliases(&self) -> Vec<&str> { vec!["bug"] }
-    fn description(&self) -> &str { "Submit feedback about Claurst" }
+    fn description(&self) -> &str { "Submit feedback about CYPHES" }
     fn help(&self) -> &str { "Usage: /feedback [report]" }
 
     async fn execute(&self, args: &str, _ctx: &mut CommandContext) -> CommandResult {
@@ -1866,7 +1866,7 @@ impl SlashCommand for UsageCommand {
         let cost = ctx.cost_tracker.total_cost_usd();
 
         // Try to get account tier from OAuth tokens
-        let account_info = match claurst_core::oauth::OAuthTokens::load().await {
+        let account_info = match cyphes_core::oauth::OAuthTokens::load().await {
             Some(tokens) => {
                 let sub = tokens.subscription_type.as_deref().unwrap_or("unknown");
                 format!("Plan: {}", sub)
@@ -1915,7 +1915,7 @@ impl SlashCommand for PluginCommand {
     fn description(&self) -> &str { "Manage plugins" }
     fn help(&self) -> &str {
         "Usage: /plugin [list|info <name>|enable <name>|disable <name>|install <path>|reload]\n\
-         Manage Claurst plugins.\n\n\
+         Manage CYPHES plugins.\n\n\
          Subcommands:\n\
            /plugin              — list all installed plugins\n\
            /plugin list         — list all installed plugins\n\
@@ -1933,31 +1933,31 @@ impl SlashCommand for PluginCommand {
         // fresh disk scan so the command still works without the global being set.
         async fn get_registry(
             project_dir: &std::path::Path,
-        ) -> claurst_plugins::PluginRegistry {
-            if let Some(global) = claurst_plugins::global_plugin_registry() {
-                let mut reg = claurst_plugins::PluginRegistry::new();
+        ) -> cyphes_plugins::PluginRegistry {
+            if let Some(global) = cyphes_plugins::global_plugin_registry() {
+                let mut reg = cyphes_plugins::PluginRegistry::new();
                 for p in global.all() {
                     reg.insert(p.clone());
                 }
                 reg
             } else {
-                claurst_plugins::load_plugins(project_dir, &[]).await
+                cyphes_plugins::load_plugins(project_dir, &[]).await
             }
         }
 
-        let parsed = claurst_plugins::parse_plugin_args(args);
+        let parsed = cyphes_plugins::parse_plugin_args(args);
         match parsed {
-            claurst_plugins::PluginSubCommand::List => {
+            cyphes_plugins::PluginSubCommand::List => {
                 let registry = get_registry(&project_dir).await;
-                CommandResult::Message(claurst_plugins::format_plugin_list(&registry))
+                CommandResult::Message(cyphes_plugins::format_plugin_list(&registry))
             }
-            claurst_plugins::PluginSubCommand::Enable(ref name) if name.is_empty() => {
+            cyphes_plugins::PluginSubCommand::Enable(ref name) if name.is_empty() => {
                 CommandResult::Error(
                     "Usage: /plugin enable <name>\nRun /plugin list to see installed plugins."
                         .to_string(),
                 )
             }
-            claurst_plugins::PluginSubCommand::Enable(name) => {
+            cyphes_plugins::PluginSubCommand::Enable(name) => {
                 let registry = get_registry(&project_dir).await;
                 if registry.get(&name).is_none() {
                     return CommandResult::Error(format!(
@@ -1965,7 +1965,7 @@ impl SlashCommand for PluginCommand {
                         name
                     ));
                 }
-                let mut settings = claurst_core::config::Settings::load_sync().unwrap_or_default();
+                let mut settings = cyphes_core::config::Settings::load_sync().unwrap_or_default();
                 settings.enabled_plugins.insert(name.clone());
                 settings.disabled_plugins.remove(&name);
                 let _ = settings.save_sync();
@@ -1974,13 +1974,13 @@ impl SlashCommand for PluginCommand {
                     name
                 ))
             }
-            claurst_plugins::PluginSubCommand::Disable(ref name) if name.is_empty() => {
+            cyphes_plugins::PluginSubCommand::Disable(ref name) if name.is_empty() => {
                 CommandResult::Error(
                     "Usage: /plugin disable <name>\nRun /plugin list to see installed plugins."
                         .to_string(),
                 )
             }
-            claurst_plugins::PluginSubCommand::Disable(name) => {
+            cyphes_plugins::PluginSubCommand::Disable(name) => {
                 let registry = get_registry(&project_dir).await;
                 if registry.get(&name).is_none() {
                     return CommandResult::Error(format!(
@@ -1988,7 +1988,7 @@ impl SlashCommand for PluginCommand {
                         name
                     ));
                 }
-                let mut settings = claurst_core::config::Settings::load_sync().unwrap_or_default();
+                let mut settings = cyphes_core::config::Settings::load_sync().unwrap_or_default();
                 settings.disabled_plugins.insert(name.clone());
                 settings.enabled_plugins.remove(&name);
                 let _ = settings.save_sync();
@@ -1997,24 +1997,24 @@ impl SlashCommand for PluginCommand {
                     name
                 ))
             }
-            claurst_plugins::PluginSubCommand::Info(ref name) if name.is_empty() => {
+            cyphes_plugins::PluginSubCommand::Info(ref name) if name.is_empty() => {
                 CommandResult::Error(
                     "Usage: /plugin info <name>\nRun /plugin list to see installed plugins."
                         .to_string(),
                 )
             }
-            claurst_plugins::PluginSubCommand::Info(name) => {
+            cyphes_plugins::PluginSubCommand::Info(name) => {
                 let registry = get_registry(&project_dir).await;
-                CommandResult::Message(claurst_plugins::format_plugin_info(&registry, &name))
+                CommandResult::Message(cyphes_plugins::format_plugin_info(&registry, &name))
             }
-            claurst_plugins::PluginSubCommand::Install(ref path) if path.is_empty() => {
+            cyphes_plugins::PluginSubCommand::Install(ref path) if path.is_empty() => {
                 CommandResult::Error(
                     "Usage: /plugin install <path>\nProvide the path to a local plugin directory."
                         .to_string(),
                 )
             }
-            claurst_plugins::PluginSubCommand::Install(path) => {
-                let result = claurst_plugins::install_plugin_from_path(
+            cyphes_plugins::PluginSubCommand::Install(path) => {
+                let result = cyphes_plugins::install_plugin_from_path(
                     std::path::Path::new(&path),
                 );
                 match result {
@@ -2025,13 +2025,13 @@ impl SlashCommand for PluginCommand {
                     Err(e) => CommandResult::Error(format!("Install failed: {}", e)),
                 }
             }
-            claurst_plugins::PluginSubCommand::Reload => {
+            cyphes_plugins::PluginSubCommand::Reload => {
                 let old_registry = get_registry(&project_dir).await;
                 let (new_registry, diff) =
-                    claurst_plugins::reload_plugins(&old_registry, &project_dir, &[]).await;
-                CommandResult::Message(claurst_plugins::format_reload_summary(&new_registry, &diff))
+                    cyphes_plugins::reload_plugins(&old_registry, &project_dir, &[]).await;
+                CommandResult::Message(cyphes_plugins::format_reload_summary(&new_registry, &diff))
             }
-            claurst_plugins::PluginSubCommand::Help => {
+            cyphes_plugins::PluginSubCommand::Help => {
                 CommandResult::Message(
                     "Plugin commands:\n\
                      /plugin              — list all installed plugins\n\
@@ -2062,11 +2062,11 @@ impl SlashCommand for ReloadPluginsCommand {
     async fn execute(&self, _args: &str, ctx: &mut CommandContext) -> CommandResult {
         let project_dir = ctx.working_dir.clone();
 
-        let old_registry = claurst_plugins::load_plugins(&project_dir, &[]).await;
+        let old_registry = cyphes_plugins::load_plugins(&project_dir, &[]).await;
         let (new_registry, diff) =
-            claurst_plugins::reload_plugins(&old_registry, &project_dir, &[]).await;
+            cyphes_plugins::reload_plugins(&old_registry, &project_dir, &[]).await;
 
-        CommandResult::Message(claurst_plugins::format_reload_summary(&new_registry, &diff))
+        CommandResult::Message(cyphes_plugins::format_reload_summary(&new_registry, &diff))
     }
 }
 
@@ -2076,7 +2076,7 @@ impl SlashCommand for ReloadPluginsCommand {
 /// built-in slash command.  The adapter is created on-the-fly inside
 /// `execute_command` when no built-in matches the input.
 pub struct PluginSlashCommandAdapter {
-    pub def: claurst_plugins::PluginCommandDef,
+    pub def: cyphes_plugins::PluginCommandDef,
 }
 
 #[async_trait]
@@ -2091,15 +2091,15 @@ impl SlashCommand for PluginSlashCommandAdapter {
 
     async fn execute(&self, args: &str, _ctx: &mut CommandContext) -> CommandResult {
         // Enforce capability grants before the action runs.
-        if let Err(reason) = claurst_plugins::check_plugin_capability(&self.def) {
+        if let Err(reason) = cyphes_plugins::check_plugin_capability(&self.def) {
             return CommandResult::Error(reason);
         }
 
         match &self.def.run_action {
-            claurst_plugins::CommandRunAction::StaticResponse(msg) => {
+            cyphes_plugins::CommandRunAction::StaticResponse(msg) => {
                 CommandResult::Message(msg.clone())
             }
-            claurst_plugins::CommandRunAction::MarkdownPrompt {
+            cyphes_plugins::CommandRunAction::MarkdownPrompt {
                 file_path,
                 plugin_root: _,
             } => {
@@ -2119,7 +2119,7 @@ impl SlashCommand for PluginSlashCommandAdapter {
                     )),
                 }
             }
-            claurst_plugins::CommandRunAction::ShellCommand {
+            cyphes_plugins::CommandRunAction::ShellCommand {
                 command,
                 plugin_root,
             } => {
@@ -2168,7 +2168,7 @@ impl SlashCommand for DoctorCommand {
          - Disk space\n\
          - Config file integrity\n\
          - Tool permission summary\n\
-         - Claurst version"
+         - CYPHES version"
     }
 
     async fn execute(&self, _args: &str, ctx: &mut CommandContext) -> CommandResult {
@@ -2176,7 +2176,7 @@ impl SlashCommand for DoctorCommand {
 
         // ── Header ─────────────────────────────────────────────────────────
         lines.push(format!(
-            "Claurst v{}  |  {}",
+            "CYPHES v{}  |  {}",
             env!("CARGO_PKG_VERSION"),
             std::env::consts::OS,
         ));
@@ -2185,23 +2185,23 @@ impl SlashCommand for DoctorCommand {
         // ── API / Auth ──────────────────────────────────────────────────────
         lines.push("Authentication".to_string());
         let anthropic_auth = ctx.config.resolve_anthropic_auth_async().await.unwrap_or((String::new(), false));
-        let client_config = claurst_api::client::ClientConfig {
+        let client_config = cyphes_api::client::ClientConfig {
             api_key: anthropic_auth.0,
             api_base: ctx.config.resolve_anthropic_api_base(),
             use_bearer_auth: anthropic_auth.1,
             ..Default::default()
         };
-        let provider_registry = claurst_api::ProviderRegistry::from_config(&ctx.config, client_config);
-        let provider_id = claurst_core::ProviderId::new(ctx.config.selected_provider_id());
+        let provider_registry = cyphes_api::ProviderRegistry::from_config(&ctx.config, client_config);
+        let provider_id = cyphes_core::ProviderId::new(ctx.config.selected_provider_id());
         match provider_registry.get(&provider_id) {
             Some(provider) => match provider.health_check().await {
-                Ok(claurst_api::provider_types::ProviderStatus::Healthy) => {
+                Ok(cyphes_api::provider_types::ProviderStatus::Healthy) => {
                     lines.push(format!("  ✓ {} is healthy", provider.name()));
                 }
-                Ok(claurst_api::provider_types::ProviderStatus::Degraded { reason }) => {
+                Ok(cyphes_api::provider_types::ProviderStatus::Degraded { reason }) => {
                     lines.push(format!("  ⚠ {} is degraded: {}", provider.name(), reason));
                 }
-                Ok(claurst_api::provider_types::ProviderStatus::Unavailable { reason }) => {
+                Ok(cyphes_api::provider_types::ProviderStatus::Unavailable { reason }) => {
                     lines.push(format!("  ✗ {} is unavailable: {}", provider.name(), reason));
                 }
                 Err(err) => {
@@ -2209,7 +2209,7 @@ impl SlashCommand for DoctorCommand {
                 }
             },
             None => {
-                let hint = claurst_core::config::primary_api_key_env_var_for_provider(
+                let hint = cyphes_core::config::primary_api_key_env_var_for_provider(
                     ctx.config.selected_provider_id(),
                 )
                 .map(|env| format!("set {env}"))
@@ -2308,19 +2308,19 @@ impl SlashCommand for DoctorCommand {
 
         // ── Config directory ────────────────────────────────────────────────
         lines.push("Configuration".to_string());
-        let config_dir = claurst_core::config::Settings::config_dir();
+        let config_dir = cyphes_core::config::Settings::config_dir();
         if config_dir.exists() {
             lines.push(format!("  ✓ Config dir: {}", config_dir.display()));
         } else {
             lines.push(format!("  ✗ Config dir missing: {}", config_dir.display()));
         }
 
-        // Settings validation — try loading ~/.claurst/settings.json
+        // Settings validation — try loading ~/.cyphes/settings.json
         let settings_path = config_dir.join("settings.json");
         if settings_path.exists() {
             match std::fs::read_to_string(&settings_path)
                 .ok()
-                .and_then(|s| serde_json::from_str::<claurst_core::config::Settings>(&s).ok())
+                .and_then(|s| serde_json::from_str::<cyphes_core::config::Settings>(&s).ok())
             {
                 Some(_) => lines.push("  ✓ settings.json valid".to_string()),
                 None => {
@@ -2361,20 +2361,20 @@ impl SlashCommand for DoctorCommand {
             let statuses = mgr.all_statuses();
             for srv in ctx.config.mcp_servers.iter().take(12) {
                 let status_str = match statuses.get(&srv.name) {
-                    Some(claurst_mcp::McpServerStatus::Connected { tool_count }) => {
+                    Some(cyphes_mcp::McpServerStatus::Connected { tool_count }) => {
                         format!("  ✓ {} — connected ({} tool{})",
                             srv.name, tool_count, if *tool_count == 1 { "" } else { "s" })
                     }
-                    Some(claurst_mcp::McpServerStatus::Connecting) => {
+                    Some(cyphes_mcp::McpServerStatus::Connecting) => {
                         format!("  ⚠ {} — connecting…", srv.name)
                     }
-                    Some(claurst_mcp::McpServerStatus::Disconnected { last_error: Some(e) }) => {
+                    Some(cyphes_mcp::McpServerStatus::Disconnected { last_error: Some(e) }) => {
                         format!("  ✗ {} — failed: {}", srv.name, e)
                     }
-                    Some(claurst_mcp::McpServerStatus::Disconnected { last_error: None }) => {
+                    Some(cyphes_mcp::McpServerStatus::Disconnected { last_error: None }) => {
                         format!("  ✗ {} — disconnected", srv.name)
                     }
-                    Some(claurst_mcp::McpServerStatus::Failed { error, .. }) => {
+                    Some(cyphes_mcp::McpServerStatus::Failed { error, .. }) => {
                         format!("  ✗ {} — failed: {}", srv.name, error)
                     }
                     None => format!("  ⚠ {} — not started", srv.name),
@@ -2409,7 +2409,7 @@ impl SlashCommand for DoctorCommand {
 
         // ── Tool permissions ─────────────────────────────────────────────────
         lines.push("Tool Permissions".to_string());
-        let all_tool_names: Vec<String> = claurst_tools::all_tools()
+        let all_tool_names: Vec<String> = cyphes_tools::all_tools()
             .iter()
             .map(|t| t.name().to_string())
             .collect();
@@ -2425,10 +2425,10 @@ impl SlashCommand for DoctorCommand {
             .filter(|n| !explicit_tools.contains(n.as_str()))
             .count();
         let mode_label = match ctx.config.permission_mode {
-            claurst_core::PermissionMode::BypassPermissions => "bypass-permissions (no confirmation required)",
-            claurst_core::PermissionMode::AcceptEdits => "accept-edits (file edits auto-approved)",
-            claurst_core::PermissionMode::Plan => "plan (read-only, no writes)",
-            claurst_core::PermissionMode::Default => "default (confirm destructive actions)",
+            cyphes_core::PermissionMode::BypassPermissions => "bypass-permissions (no confirmation required)",
+            cyphes_core::PermissionMode::AcceptEdits => "accept-edits (file edits auto-approved)",
+            cyphes_core::PermissionMode::Plan => "plan (read-only, no writes)",
+            cyphes_core::PermissionMode::Default => "default (confirm destructive actions)",
         };
         lines.push(format!("  • Mode: {mode_label}"));
         lines.push(format!("  • Total built-in tools: {total_tools}"));
@@ -2442,7 +2442,7 @@ impl SlashCommand for DoctorCommand {
                 denied_count,
                 ctx.config.disallowed_tools.join(", ")));
         }
-        if ctx.config.permission_mode == claurst_core::PermissionMode::Default {
+        if ctx.config.permission_mode == cyphes_core::PermissionMode::Default {
             lines.push(format!("  ⚠ Require confirmation: {} tool(s)", confirm_count));
         }
         lines.push(String::new());
@@ -2483,9 +2483,9 @@ impl SlashCommand for LoginCommand {
         let label = parse_label_arg(&tokens);
 
         let provider = if use_codex {
-            claurst_core::accounts::PROVIDER_CODEX
+            cyphes_core::accounts::PROVIDER_CODEX
         } else {
-            claurst_core::accounts::PROVIDER_ANTHROPIC
+            cyphes_core::accounts::PROVIDER_ANTHROPIC
         };
 
         CommandResult::StartLoginForProvider {
@@ -2529,21 +2529,21 @@ impl SlashCommand for LogoutCommand {
 
         if use_codex {
             if purge_all {
-                let mut registry = claurst_core::accounts::AccountRegistry::load();
+                let mut registry = cyphes_core::accounts::AccountRegistry::load();
                 let ids: Vec<String> = registry
-                    .list(claurst_core::accounts::PROVIDER_CODEX)
+                    .list(cyphes_core::accounts::PROVIDER_CODEX)
                     .into_iter()
                     .map(|p| p.id)
                     .collect();
                 for id in &ids {
-                    let _ = registry.remove(claurst_core::accounts::PROVIDER_CODEX, id);
+                    let _ = registry.remove(cyphes_core::accounts::PROVIDER_CODEX, id);
                 }
                 return CommandResult::Message(format!(
                     "Removed {} stored Codex account(s).",
                     ids.len()
                 ));
             }
-            if let Err(e) = claurst_core::oauth_config::clear_codex_tokens() {
+            if let Err(e) = cyphes_core::oauth_config::clear_codex_tokens() {
                 return CommandResult::Error(format!("Failed to clear Codex tokens: {}", e));
             }
             return CommandResult::Message("Logged out of the active Codex account.".to_string());
@@ -2551,16 +2551,16 @@ impl SlashCommand for LogoutCommand {
 
         // Anthropic logout.
         if purge_all {
-            let mut registry = claurst_core::accounts::AccountRegistry::load();
+            let mut registry = cyphes_core::accounts::AccountRegistry::load();
             let ids: Vec<String> = registry
-                .list(claurst_core::accounts::PROVIDER_ANTHROPIC)
+                .list(cyphes_core::accounts::PROVIDER_ANTHROPIC)
                 .into_iter()
                 .map(|p| p.id)
                 .collect();
             for id in &ids {
-                let _ = registry.remove(claurst_core::accounts::PROVIDER_ANTHROPIC, id);
+                let _ = registry.remove(cyphes_core::accounts::PROVIDER_ANTHROPIC, id);
             }
-            let mut settings = claurst_core::config::Settings::load().await.unwrap_or_default();
+            let mut settings = cyphes_core::config::Settings::load().await.unwrap_or_default();
             settings.config.api_key = None;
             let _ = settings.save().await;
             ctx.config.api_key = None;
@@ -2570,10 +2570,10 @@ impl SlashCommand for LogoutCommand {
             ));
         }
 
-        if let Err(e) = claurst_core::oauth::OAuthTokens::clear().await {
+        if let Err(e) = cyphes_core::oauth::OAuthTokens::clear().await {
             return CommandResult::Error(format!("Failed to clear OAuth tokens: {}", e));
         }
-        let mut settings = claurst_core::config::Settings::load().await.unwrap_or_default();
+        let mut settings = cyphes_core::config::Settings::load().await.unwrap_or_default();
         settings.config.api_key = None;
         if let Err(e) = settings.save().await {
             return CommandResult::Error(format!("Failed to update settings: {}", e));
@@ -2599,11 +2599,11 @@ impl SlashCommand for AccountsCommand {
     }
 
     async fn execute(&self, _args: &str, _ctx: &mut CommandContext) -> CommandResult {
-        let registry = claurst_core::accounts::AccountRegistry::load();
+        let registry = cyphes_core::accounts::AccountRegistry::load();
         let mut out = String::new();
         for (provider, label) in [
-            (claurst_core::accounts::PROVIDER_ANTHROPIC, "Anthropic"),
-            (claurst_core::accounts::PROVIDER_CODEX, "Codex"),
+            (cyphes_core::accounts::PROVIDER_ANTHROPIC, "Anthropic"),
+            (cyphes_core::accounts::PROVIDER_CODEX, "Codex"),
         ] {
             let profiles = registry.list(provider);
             let active = registry.active(provider);
@@ -2649,9 +2649,9 @@ impl SlashCommand for SwitchCommand {
         let tokens: Vec<&str> = args.split_whitespace().collect();
         let use_codex = tokens.iter().any(|t| *t == "--codex");
         let provider = if use_codex {
-            claurst_core::accounts::PROVIDER_CODEX
+            cyphes_core::accounts::PROVIDER_CODEX
         } else {
-            claurst_core::accounts::PROVIDER_ANTHROPIC
+            cyphes_core::accounts::PROVIDER_ANTHROPIC
         };
         let display = if use_codex { "Codex" } else { "Anthropic" };
         let id = tokens.iter().find(|t| !t.starts_with("--"));
@@ -2663,7 +2663,7 @@ impl SlashCommand for SwitchCommand {
             ));
         };
 
-        let mut registry = claurst_core::accounts::AccountRegistry::load();
+        let mut registry = cyphes_core::accounts::AccountRegistry::load();
         match registry.switch_to(provider, id) {
             Ok(()) => CommandResult::Message(format!(
                 "Switched {} active account to '{}'.",
@@ -2816,14 +2816,14 @@ impl SlashCommand for ReviewCommand {
         // ------------------------------------------------------------------
         // 1. Collect the diff
         // ------------------------------------------------------------------
-        let repo_root = claurst_core::git_utils::get_repo_root(&ctx.working_dir)
+        let repo_root = cyphes_core::git_utils::get_repo_root(&ctx.working_dir)
             .unwrap_or_else(|| ctx.working_dir.clone());
 
         let diff = if base.is_empty() {
             // No base given — use staged changes; fall back to unstaged if empty.
-            let staged = claurst_core::git_utils::get_staged_diff(&repo_root);
+            let staged = cyphes_core::git_utils::get_staged_diff(&repo_root);
             if staged.is_empty() {
-                claurst_core::git_utils::get_unstaged_diff(&repo_root)
+                cyphes_core::git_utils::get_unstaged_diff(&repo_root)
             } else {
                 staged
             }
@@ -2928,10 +2928,10 @@ impl SlashCommand for ReviewCommand {
             file_summary, diff_for_llm
         );
 
-        let request = claurst_api::ProviderRequest {
+        let request = cyphes_api::ProviderRequest {
             model,
             messages: vec![Message::user(review_prompt)],
-            system_prompt: Some(claurst_api::SystemPrompt::Text(
+            system_prompt: Some(cyphes_api::SystemPrompt::Text(
                 "You are a thorough, constructive code reviewer. \
                  Be concise but precise. Focus on correctness, security, and maintainability."
                     .to_string(),
@@ -2976,7 +2976,7 @@ impl SlashCommand for ReviewCommand {
                 // Determine owner/repo from git remote
                 if let Some((owner, repo)) = detect_github_owner_repo(&repo_root) {
                     let comment_body = format!(
-                        "## Claurst Code Review\n\n{}\n\n---\n*Generated by [Claurst](https://claude.ai/claude-code)*",
+                        "## CYPHES Code Review\n\n{}\n\n---\n*Generated by [CYPHES](https://claude.ai/claude-code)*",
                         review_text
                     );
 
@@ -2989,7 +2989,7 @@ impl SlashCommand for ReviewCommand {
                     let post_result = http
                         .post(&url)
                         .header("Authorization", format!("Bearer {}", token))
-                        .header("User-Agent", "claurst/1.0")
+                        .header("User-Agent", "cyphes/1.0")
                         .header("Accept", "application/vnd.github+json")
                         .json(&serde_json::json!({ "body": comment_body }))
                         .send()
@@ -3163,7 +3163,7 @@ impl SlashCommand for HooksCommand {
             // so the user knows what to do.
             return CommandResult::Message(
                 "No hooks configured.\n\
-                 Add hooks to ~/.claurst/settings.json under the 'hooks' key.\n\
+                 Add hooks to ~/.cyphes/settings.json under the 'hooks' key.\n\
                  Example:\n\
                  \x20 \"hooks\": {\n\
                  \x20   \"PreToolUse\": [{ \"matcher\": \"*\", \"hooks\": [{ \"type\": \"command\", \"command\": \"echo $STDIN\" }] }]\n\
@@ -3188,7 +3188,7 @@ impl SlashCommand for McpCommand {
     fn help(&self) -> &str {
         "Usage: /mcp [list|status|auth <server>|connect <server>|logs <server>|resources|prompts|get-prompt ...]\n\n\
          Manages Model Context Protocol (MCP) servers.\n\
-         MCP servers extend Claurst with external tools, resources, and prompt templates.\n\n\
+         MCP servers extend CYPHES with external tools, resources, and prompt templates.\n\n\
          Subcommands:\n\
            /mcp                        — list configured servers with live status\n\
            /mcp list                   — same as above\n\
@@ -3199,7 +3199,7 @@ impl SlashCommand for McpCommand {
            /mcp resources [server]     — list resources from connected servers\n\
            /mcp prompts [server]       — list prompt templates from connected servers\n\
            /mcp get-prompt <server> <prompt> [key=value ...]  — expand a prompt template\n\n\
-         To add/remove MCP servers, edit ~/.claurst/settings.json\n\
+         To add/remove MCP servers, edit ~/.cyphes/settings.json\n\
          under the 'mcpServers' key.\n\
          Docs: https://docs.anthropic.com/claude-code/mcp"
     }
@@ -3265,7 +3265,7 @@ impl SlashCommand for McpCommand {
         if ctx.config.mcp_servers.is_empty() {
             return CommandResult::Message(
                 "No MCP servers configured.\n\n\
-                 To add a MCP server, edit ~/.claurst/settings.json:\n\
+                 To add a MCP server, edit ~/.cyphes/settings.json:\n\
                  {\n\
                    \"mcpServers\": [\n\
                      {\n\
@@ -3314,7 +3314,7 @@ impl SlashCommand for McpCommand {
             if ctx.mcp_manager.is_none() {
                 output.push_str(
                     "\nNote: MCP manager is not active in this session.\n\
-                     Restart Claurst to connect to MCP servers.\n\
+                     Restart CYPHES to connect to MCP servers.\n\
                      Use /mcp connect <server> to retry a single server."
                 );
             }
@@ -3392,7 +3392,7 @@ impl McpCommand {
             } else {
                 format!("Configured env vars: {}", env_keys.join(", "))
             };
-            let token_note = match claurst_mcp::oauth::get_mcp_token(server_name) {
+            let token_note = match cyphes_mcp::oauth::get_mcp_token(server_name) {
                 Some(tok) if !tok.is_expired(60) => " (valid token stored)".to_string(),
                 Some(_) => " (stored token is expired)".to_string(),
                 None => " (no token stored)".to_string(),
@@ -3401,14 +3401,14 @@ impl McpCommand {
                 "MCP Server '{}' (stdio){}\n\
                  {}\n\n\
                  stdio servers authenticate via environment variables (API keys etc.).\n\
-                 Add required variables to the 'env' block in ~/.claurst/settings.json,\n\
-                 then restart Claurst or run /mcp connect {} to reconnect.",
+                 Add required variables to the 'env' block in ~/.cyphes/settings.json,\n\
+                 then restart CYPHES or run /mcp connect {} to reconnect.",
                 server_name, token_note, env_note, server_name
             ));
         }
 
         if let Some(manager) = &ctx.mcp_manager {
-            use claurst_mcp::McpServerStatus;
+            use cyphes_mcp::McpServerStatus;
             if matches!(manager.server_status(server_name), McpServerStatus::Connecting) {
                 return CommandResult::Message(format!(
                     "MCP server '{}' is currently connecting — try again shortly.",
@@ -3469,7 +3469,7 @@ impl McpCommand {
 
         // No live manager — static instructions.
         let server_url = srv.url.as_deref().unwrap_or("(URL not configured)");
-        let token_note = match claurst_mcp::oauth::get_mcp_token(server_name) {
+        let token_note = match cyphes_mcp::oauth::get_mcp_token(server_name) {
             Some(tok) if !tok.is_expired(60) => " (valid token stored)".to_string(),
             Some(_) => " (stored token is expired)".to_string(),
             None => " (no token stored)".to_string(),
@@ -3479,9 +3479,9 @@ impl McpCommand {
              Server URL: {}\n\n\
              To authenticate:\n\
              1. Open the server URL in your browser and complete OAuth\n\
-             2. The token is saved to ~/.claurst/mcp-tokens/{}.json\n\
-             3. Restart Claurst — the token will be used automatically\n\n\
-             Token storage: ~/.claurst/mcp-tokens/{}.json",
+             2. The token is saved to ~/.cyphes/mcp-tokens/{}.json\n\
+             3. Restart CYPHES — the token will be used automatically\n\n\
+             Token storage: ~/.cyphes/mcp-tokens/{}.json",
             server_name, token_note, server_url, server_name, server_name
         ))
     }
@@ -3492,7 +3492,7 @@ impl McpCommand {
             Some(m) => m,
             None => return CommandResult::Message(
                 "MCP manager is not active. No tool information available.\n\
-                 Restart Claurst to connect to MCP servers.".to_string()
+                 Restart CYPHES to connect to MCP servers.".to_string()
             ),
         };
 
@@ -3550,8 +3550,8 @@ impl McpCommand {
                 // No live manager — give useful instructions.
                 CommandResult::Message(format!(
                     "The MCP manager is not running in this session.\n\
-                     To connect '{}', restart Claurst — servers connect automatically\n\
-                     on startup using the configuration in ~/.claurst/settings.json.\n\
+                     To connect '{}', restart CYPHES — servers connect automatically\n\
+                     on startup using the configuration in ~/.cyphes/settings.json.\n\
                      \n\
                      If the server requires authentication, run /mcp auth {} first.",
                     server_name, server_name
@@ -3559,7 +3559,7 @@ impl McpCommand {
             }
             Some(manager) => {
                 let current = manager.server_status(server_name);
-                use claurst_mcp::McpServerStatus;
+                use cyphes_mcp::McpServerStatus;
                 match current {
                     McpServerStatus::Connected { tool_count } => {
                         CommandResult::Message(format!(
@@ -3586,8 +3586,8 @@ impl McpCommand {
                              The runtime MCP manager reconnects servers automatically.\n\
                              If the server stays disconnected:\n\
                              1. Check authentication: /mcp auth {}\n\
-                             2. Verify the command/URL in ~/.claurst/settings.json\n\
-                             3. Restart Claurst to force a full reconnect",
+                             2. Verify the command/URL in ~/.cyphes/settings.json\n\
+                             3. Restart CYPHES to force a full reconnect",
                             server_name,
                             manager.server_status(server_name).display(),
                             server_name
@@ -3614,7 +3614,7 @@ impl McpCommand {
         let mut lines = vec![format!("MCP Server Logs — '{}'\n──────────────────────", server_name)];
 
         if let Some(manager) = &ctx.mcp_manager {
-            use claurst_mcp::McpServerStatus;
+            use cyphes_mcp::McpServerStatus;
             let status = manager.server_status(server_name);
             lines.push(format!("Current status:  {}", status.display()));
 
@@ -3664,7 +3664,7 @@ impl McpCommand {
             }
         } else {
             lines.push("MCP manager is not active in this session.".to_string());
-            lines.push("Restart Claurst to start the MCP runtime.".to_string());
+            lines.push("Restart CYPHES to start the MCP runtime.".to_string());
         }
 
         // Hint about log files.
@@ -3759,9 +3759,9 @@ impl McpCommand {
                         let mut injected = String::new();
                         for msg in &result.messages {
                             let text = match &msg.content {
-                                claurst_mcp::PromptMessageContent::Text { text } => text.clone(),
-                                claurst_mcp::PromptMessageContent::Image { .. } => "[image]".to_string(),
-                                claurst_mcp::PromptMessageContent::Resource { resource } => {
+                                cyphes_mcp::PromptMessageContent::Text { text } => text.clone(),
+                                cyphes_mcp::PromptMessageContent::Image { .. } => "[image]".to_string(),
+                                cyphes_mcp::PromptMessageContent::Resource { resource } => {
                                     resource.to_string()
                                 }
                             };
@@ -3830,10 +3830,10 @@ impl SlashCommand for PermissionsCommand {
         match sub {
             "set" => {
                 let mode = match arg.to_lowercase().as_str() {
-                    "default" => claurst_core::config::PermissionMode::Default,
-                    "accept-edits" | "accept_edits" => claurst_core::config::PermissionMode::AcceptEdits,
-                    "bypass-permissions" | "bypass_permissions" => claurst_core::config::PermissionMode::BypassPermissions,
-                    "plan" => claurst_core::config::PermissionMode::Plan,
+                    "default" => cyphes_core::config::PermissionMode::Default,
+                    "accept-edits" | "accept_edits" => cyphes_core::config::PermissionMode::AcceptEdits,
+                    "bypass-permissions" | "bypass_permissions" => cyphes_core::config::PermissionMode::BypassPermissions,
+                    "plan" => cyphes_core::config::PermissionMode::Plan,
                     _ => return CommandResult::Error(
                         "Mode must be: default, accept-edits, bypass-permissions, or plan".to_string()
                     ),
@@ -3892,11 +3892,11 @@ impl SlashCommand for PermissionsCommand {
                 let mut new_config = ctx.config.clone();
                 new_config.allowed_tools.clear();
                 new_config.disallowed_tools.clear();
-                new_config.permission_mode = claurst_core::config::PermissionMode::Default;
+                new_config.permission_mode = cyphes_core::config::PermissionMode::Default;
                 if let Err(e) = save_settings_mutation(|s| {
                     s.config.allowed_tools.clear();
                     s.config.disallowed_tools.clear();
-                    s.config.permission_mode = claurst_core::config::PermissionMode::Default;
+                    s.config.permission_mode = cyphes_core::config::PermissionMode::Default;
                 }) {
                     return CommandResult::Error(format!("Failed to save: {}", e));
                 }
@@ -3972,7 +3972,7 @@ impl SlashCommand for SessionCommand {
     async fn execute(&self, args: &str, ctx: &mut CommandContext) -> CommandResult {
         match args.trim() {
             "list" => {
-                let sessions = claurst_core::history::list_sessions().await;
+                let sessions = cyphes_core::history::list_sessions().await;
                 if sessions.is_empty() {
                     CommandResult::Message("No saved sessions found.".to_string())
                 } else {
@@ -4012,7 +4012,7 @@ impl SlashCommand for SessionCommand {
                     ))
                 } else {
                     // Show current session info + recent sessions list.
-                    let sessions = claurst_core::history::list_sessions().await;
+                    let sessions = cyphes_core::history::list_sessions().await;
                     let mut output = format!(
                         "Current session\n\
                          ───────────────\n\
@@ -4074,7 +4074,7 @@ impl SlashCommand for ForkCommand {
         let fork_at = fork_index.unwrap_or(messages.len()).min(messages.len());
         let forked_messages: Vec<_> = messages[..fork_at].to_vec();
 
-        let mut new_session = claurst_core::history::ConversationSession::new(
+        let mut new_session = cyphes_core::history::ConversationSession::new(
             ctx.config.effective_model().to_string(),
         );
         new_session.messages = forked_messages;
@@ -4089,7 +4089,7 @@ impl SlashCommand for ForkCommand {
         );
 
         let new_id = new_session.id.clone();
-        match claurst_core::history::save_session(&new_session).await {
+        match cyphes_core::history::save_session(&new_session).await {
             Ok(()) => CommandResult::Message(format!(
                 "Session forked at message {}. New session: {}\nUse /resume {} to switch to it.",
                 fork_at, new_id, new_id
@@ -4118,7 +4118,7 @@ impl SlashCommand for ThinkingCommand {
         } else {
             CommandResult::Message(format!(
                 "Extended thinking is available with {}.\n\
-                 You can request thinking by asking Claurst to 'think step by step' or \
+                 You can request thinking by asking CYPHES to 'think step by step' or \
                  'think carefully before answering'.",
                 model
             ))
@@ -4134,11 +4134,11 @@ impl SlashCommand for ThinkingCommand {
 /// Assistant messages render as `## Assistant\n<text>` followed by
 /// `### Tool: <name>\n**Input:** …\n**Output:** …` for each tool call pair.
 fn export_message_to_markdown(
-    msg: &claurst_core::types::Message,
-    all_messages: &[claurst_core::types::Message],
+    msg: &cyphes_core::types::Message,
+    all_messages: &[cyphes_core::types::Message],
     msg_idx: usize,
 ) -> String {
-    use claurst_core::types::{ContentBlock, MessageContent, Role, ToolResultContent};
+    use cyphes_core::types::{ContentBlock, MessageContent, Role, ToolResultContent};
 
     let role_label = match msg.role {
         Role::User => "User",
@@ -4414,15 +4414,15 @@ impl SlashCommand for ShareCommand {
         "Usage: /share\n\n\
          Renders the current session as a single self-contained HTML file,\n\
          uploads it as a secret GitHub gist via the `gh` CLI, and prints a\n\
-         viewer URL of the form https://claurst.kuber.studio/session/#<gist-id>.\n\n\
+         viewer URL of the form https://cyphes.kuber.studio/session/#<gist-id>.\n\n\
          Requirements:\n  \
            - GitHub CLI (gh) installed and logged in (`gh auth login`).\n\n\
-         The viewer base URL can be overridden with CLAURST_SHARE_VIEWER_URL.\n\
+         The viewer base URL can be overridden with CYPHES_SHARE_VIEWER_URL.\n\
          Secret gists are unlisted but readable by anyone who has the link."
     }
 
     async fn execute(&self, _args: &str, ctx: &mut CommandContext) -> CommandResult {
-        use claurst_core::share_export::{share_viewer_url, write_session_html, SessionExportMeta};
+        use cyphes_core::share_export::{share_viewer_url, write_session_html, SessionExportMeta};
 
         // 1. Check that `gh` is installed and authenticated. Uses tokio::process
         //    so the TUI event loop keeps animating during the (occasionally
@@ -4462,7 +4462,7 @@ impl SlashCommand for ShareCommand {
             .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
             .collect();
         let stem = if safe_id.is_empty() { "session".to_string() } else { safe_id };
-        let tmp = std::env::temp_dir().join(format!("claurst-session-{stem}.html"));
+        let tmp = std::env::temp_dir().join(format!("cyphes-session-{stem}.html"));
 
         if let Err(e) = write_session_html(&tmp, &ctx.messages, &meta) {
             return CommandResult::Error(format!("Failed to render session HTML: {e}"));
@@ -4505,9 +4505,9 @@ impl SlashCommand for ShareCommand {
         let viewer = share_viewer_url(gist_id);
 
         // Auto-open in the system browser unless the user opted out — saves the
-        // copy/paste dance after a /share. Skipped when `CLAURST_SHARE_NO_OPEN`
+        // copy/paste dance after a /share. Skipped when `CYPHES_SHARE_NO_OPEN`
         // is set (e.g. on a headless box) or when `open` can't find a handler.
-        let opted_out = std::env::var_os("CLAURST_SHARE_NO_OPEN")
+        let opted_out = std::env::var_os("CYPHES_SHARE_NO_OPEN")
             .map(|v| !v.is_empty() && v != "0")
             .unwrap_or(false);
         let opened = if opted_out {
@@ -4562,8 +4562,8 @@ fn extract_session_urls(messages: &[Message]) -> Vec<String> {
 
     for msg in messages {
         let text: String = match &msg.content {
-            claurst_core::types::MessageContent::Text(t) => t.clone(),
-            claurst_core::types::MessageContent::Blocks(blocks) => blocks
+            cyphes_core::types::MessageContent::Text(t) => t.clone(),
+            cyphes_core::types::MessageContent::Blocks(blocks) => blocks
                 .iter()
                 .filter_map(|b| match b {
                     ContentBlock::Text { text } => Some(text.as_str()),
@@ -4598,7 +4598,7 @@ impl SlashCommand for LinksCommand {
          /links <N>        Open the Nth URL from /links list.\n\
          /links last       Same as /links (open most recent).\n\n\
          URLs are detected in user/assistant message text. Set\n\
-         CLAURST_SHARE_NO_OPEN=1 to disable the auto-open behavior in /share."
+         CYPHES_SHARE_NO_OPEN=1 to disable the auto-open behavior in /share."
     }
 
     async fn execute(&self, args: &str, ctx: &mut CommandContext) -> CommandResult {
@@ -4656,15 +4656,15 @@ impl SlashCommand for LinksCommand {
 impl SlashCommand for SkillsCommand {
     fn name(&self) -> &str { "skills" }
     fn aliases(&self) -> Vec<&str> { vec!["skill"] }
-    fn description(&self) -> &str { "List available skills in .claurst/commands/" }
+    fn description(&self) -> &str { "List available skills in .cyphes/commands/" }
 
     async fn execute(&self, _args: &str, ctx: &mut CommandContext) -> CommandResult {
         let mut found: Vec<String> = Vec::new();
         let dirs = [
-            ctx.working_dir.join(".claurst").join("commands"),
+            ctx.working_dir.join(".cyphes").join("commands"),
             dirs::home_dir()
                 .unwrap_or_default()
-                .join(".claurst")
+                .join(".cyphes")
                 .join("commands"),
         ];
 
@@ -4685,7 +4685,7 @@ impl SlashCommand for SkillsCommand {
         }
 
         // Include skills contributed by installed plugins.
-        if let Some(registry) = claurst_plugins::global_plugin_registry() {
+        if let Some(registry) = cyphes_plugins::global_plugin_registry() {
             for skill_dir in registry.all_skill_paths() {
                 if let Ok(entries) = std::fs::read_dir(&skill_dir) {
                     for entry in entries.flatten() {
@@ -4713,16 +4713,16 @@ impl SlashCommand for SkillsCommand {
             }
         }
 
-        // Include discovered skills from .claurst/skills/ and configured paths/URLs.
-        let discovered = claurst_core::discover_skills(
+        // Include discovered skills from .cyphes/skills/ and configured paths/URLs.
+        let discovered = cyphes_core::discover_skills(
             &ctx.working_dir,
             &ctx.config.skills,
         );
 
         let mut output = if found.is_empty() && discovered.is_empty() {
             return CommandResult::Message(
-                "No skills found.\nCreate .md files in .claurst/commands/ to define skills.\n\
-                 Example: .claurst/commands/review.md".to_string(),
+                "No skills found.\nCreate .md files in .cyphes/commands/ to define skills.\n\
+                 Example: .cyphes/commands/review.md".to_string(),
             );
         } else if found.is_empty() {
             String::new()
@@ -4736,7 +4736,7 @@ impl SlashCommand for SkillsCommand {
         };
 
         if !discovered.is_empty() {
-            let mut disc_list: Vec<(&String, &claurst_core::DiscoveredSkill)> =
+            let mut disc_list: Vec<(&String, &cyphes_core::DiscoveredSkill)> =
                 discovered.iter().collect();
             disc_list.sort_by_key(|(name, _)| name.as_str());
 
@@ -4802,10 +4802,10 @@ impl SlashCommand for StatsCommand {
 
         // Count user/assistant turns separately.
         let user_turns = ctx.messages.iter()
-            .filter(|m| m.role == claurst_core::types::Role::User)
+            .filter(|m| m.role == cyphes_core::types::Role::User)
             .count();
         let assistant_turns = ctx.messages.iter()
-            .filter(|m| m.role == claurst_core::types::Role::Assistant)
+            .filter(|m| m.role == cyphes_core::types::Role::Assistant)
             .count();
 
         // Count tool-use invocations.
@@ -4937,8 +4937,8 @@ impl SlashCommand for RenameCommand {
                 let text = m.get_all_text();
                 if text.is_empty() { return None; }
                 let role = match m.role {
-                    claurst_core::types::Role::User => "User",
-                    claurst_core::types::Role::Assistant => "Assistant",
+                    cyphes_core::types::Role::User => "User",
+                    cyphes_core::types::Role::Assistant => "Assistant",
                 };
                 Some(format!("{}: {}", role, text.chars().take(300).collect::<String>()))
             })
@@ -4968,13 +4968,13 @@ impl SlashCommand for RenameCommand {
             Examples: fix-login-bug, add-auth-feature, refactor-api-client. \
             Respond with ONLY the name, nothing else.";
 
-        let request = claurst_api::ProviderRequest {
+        let request = cyphes_api::ProviderRequest {
             model: rename_model,
             messages: vec![Message::user(format!(
                 "Conversation to name:\n\n{}",
                 &excerpt[..excerpt.len().min(2000)]
             ))],
-            system_prompt: Some(claurst_api::SystemPrompt::Text(system_prompt.to_string())),
+            system_prompt: Some(cyphes_api::SystemPrompt::Text(system_prompt.to_string())),
             tools: vec![],
             max_tokens: 64,
             temperature: None,
@@ -5079,7 +5079,7 @@ impl SlashCommand for SummaryCommand {
 #[async_trait]
 impl SlashCommand for CommitCommand {
     fn name(&self) -> &str { "commit" }
-    fn description(&self) -> &str { "Ask Claurst to commit staged changes" }
+    fn description(&self) -> &str { "Ask CYPHES to commit staged changes" }
 
     async fn execute(&self, args: &str, _ctx: &mut CommandContext) -> CommandResult {
         let extra = if args.trim().is_empty() {
@@ -5099,7 +5099,7 @@ impl SlashCommand for CommitCommand {
 }
 
 // ---------------------------------------------------------------------------
-// UI settings helpers (stored in ~/.claurst/ui-settings.json)
+// UI settings helpers (stored in ~/.cyphes/ui-settings.json)
 // These hold things not present in the core Config struct.
 // ---------------------------------------------------------------------------
 
@@ -5130,7 +5130,7 @@ struct UiSettings {
 }
 
 fn ui_settings_path() -> std::path::PathBuf {
-    claurst_core::config::Settings::config_dir().join("ui-settings.json")
+    cyphes_core::config::Settings::config_dir().join("ui-settings.json")
 }
 
 fn load_ui_settings() -> UiSettings {
@@ -5173,7 +5173,7 @@ impl SlashCommand for RemoteControlCommand {
     fn description(&self) -> &str { "Show or manage the remote control (Bridge) connection" }
     fn help(&self) -> &str {
         "Usage: /remote-control [start|stop|status]\n\n\
-         The Bridge feature lets you connect your local Claurst CLI to the\n\
+         The Bridge feature lets you connect your local CYPHES CLI to the\n\
          claude.ai web UI or mobile app.\n\n\
          Subcommands:\n\
          /remote-control          Show current bridge status and connection URL\n\
@@ -5183,7 +5183,7 @@ impl SlashCommand for RemoteControlCommand {
     }
 
     async fn execute(&self, args: &str, ctx: &mut CommandContext) -> CommandResult {
-        let settings = match claurst_core::config::Settings::load().await {
+        let settings = match cyphes_core::config::Settings::load().await {
             Ok(s) => s,
             Err(e) => return CommandResult::Error(format!("Failed to load settings: {}", e)),
         };
@@ -5196,10 +5196,10 @@ impl SlashCommand for RemoteControlCommand {
                     .map(|h| h.to_string_lossy().into_owned())
                     .unwrap_or_else(|_| "(unknown host)".to_string());
 
-                let bridge_url = std::env::var("CLAURST_BRIDGE_URL")
+                let bridge_url = std::env::var("CYPHES_BRIDGE_URL")
                     .unwrap_or_else(|_| "https://claude.ai".to_string());
 
-                let token_status = if std::env::var("CLAURST_BRIDGE_TOKEN").is_ok()
+                let token_status = if std::env::var("CYPHES_BRIDGE_TOKEN").is_ok()
                     || std::env::var("CLAUDE_BRIDGE_OAUTH_TOKEN").is_ok()
                 {
                     "configured via environment variable"
@@ -5217,7 +5217,7 @@ impl SlashCommand for RemoteControlCommand {
                          ──────────────\n\
                          Session URL:  {url}\n\
                          Share this URL or QR code with others to let them connect\n\
-                         to this Claurst session from the claude.ai web UI.\n",
+                         to this CYPHES session from the claude.ai web UI.\n",
                         url = url
                     )
                 } else {
@@ -5225,14 +5225,14 @@ impl SlashCommand for RemoteControlCommand {
                 };
 
                 // Device fingerprint (first 12 chars are enough for display)
-                let fingerprint = claurst_bridge::device_fingerprint();
+                let fingerprint = cyphes_bridge::device_fingerprint();
                 let fp_short = &fingerprint[..fingerprint.len().min(12)];
 
                 CommandResult::Message(format!(
                     "Remote Control (Bridge)\n\
                      ═══════════════════════\n\
                      What it does: lets you connect the claude.ai web UI or mobile app\n\
-                     to this running Claurst CLI session on your local machine.\n\
+                     to this running CYPHES CLI session on your local machine.\n\
                      All prompts and responses are relayed bidirectionally.\n\
                      \n\
                      Local Machine\n\
@@ -5249,9 +5249,9 @@ impl SlashCommand for RemoteControlCommand {
                      How to connect\n\
                      ──────────────\n\
                      1. Obtain a session token from claude.ai (Settings → Remote Control)\n\
-                     2. Set it:  export CLAURST_BRIDGE_TOKEN=<your-token>\n\
+                     2. Set it:  export CYPHES_BRIDGE_TOKEN=<your-token>\n\
                      3. Enable:  /remote-control start\n\
-                     4. Restart Claurst — the bridge will connect automatically\n\
+                     4. Restart CYPHES — the bridge will connect automatically\n\
                      5. Open {bridge_url}/claude-code in your browser\n\
                      \n\
                      Note: Full bridge polling requires server-side session infrastructure.\n\
@@ -5272,9 +5272,9 @@ impl SlashCommand for RemoteControlCommand {
                 if let Err(e) = save_settings_mutation(|s| s.remote_control_at_startup = true) {
                     return CommandResult::Error(format!("Failed to save settings: {}", e));
                 }
-                let bridge_url = std::env::var("CLAURST_BRIDGE_URL")
+                let bridge_url = std::env::var("CYPHES_BRIDGE_URL")
                     .unwrap_or_else(|_| "https://claude.ai".to_string());
-                let token_note = if std::env::var("CLAURST_BRIDGE_TOKEN").is_ok()
+                let token_note = if std::env::var("CYPHES_BRIDGE_TOKEN").is_ok()
                     || std::env::var("CLAUDE_BRIDGE_OAUTH_TOKEN").is_ok()
                 {
                     "Session token detected in environment — bridge will connect on next start."
@@ -5283,13 +5283,13 @@ impl SlashCommand for RemoteControlCommand {
                     format!(
                         "No session token found.\n\
                          Get a token from {bridge_url} (Settings → Remote Control)\n\
-                         then run:  export CLAURST_BRIDGE_TOKEN=<token>",
+                         then run:  export CYPHES_BRIDGE_TOKEN=<token>",
                         bridge_url = bridge_url
                     )
                 };
                 CommandResult::Message(format!(
                     "Remote control bridge enabled at startup.\n\
-                     Restart Claurst to activate the bridge connection.\n\n\
+                     Restart CYPHES to activate the bridge connection.\n\n\
                      {token_note}",
                     token_note = token_note
                 ))
@@ -5320,7 +5320,7 @@ impl SlashCommand for RemoteEnvCommand {
     fn description(&self) -> &str { "Show and manage environment variables for remote sessions" }
     fn help(&self) -> &str {
         "Usage: /remote-env [set <KEY> <VALUE> | unset <KEY> | list]\n\n\
-         Manages env vars stored in config that are forwarded to remote Claurst sessions.\n\
+         Manages env vars stored in config that are forwarded to remote CYPHES sessions.\n\
          These are persisted to settings under the 'env' key."
     }
 
@@ -5494,11 +5494,11 @@ impl SlashCommand for CopyCommand {
         let n: usize = args.trim().parse().unwrap_or(1).max(1);
 
         // Find the Nth most recent assistant message
-        let assistant_msgs: Vec<&claurst_core::types::Message> = ctx
+        let assistant_msgs: Vec<&cyphes_core::types::Message> = ctx
             .messages
             .iter()
             .rev()
-            .filter(|m| m.role == claurst_core::types::Role::Assistant)
+            .filter(|m| m.role == cyphes_core::types::Role::Assistant)
             .take(n)
             .collect();
 
@@ -6065,7 +6065,7 @@ impl SlashCommand for VimCommand {
         "Usage: /vim [on|off]\n\n\
          Toggles vim keybinding mode in the REPL input.\n\
          When enabled, use Esc to switch between INSERT and NORMAL modes.\n\n\
-         The setting is persisted to ~/.claurst/ui-settings.json."
+         The setting is persisted to ~/.cyphes/ui-settings.json."
     }
 
     async fn execute(&self, args: &str, _ctx: &mut CommandContext) -> CommandResult {
@@ -6113,7 +6113,7 @@ impl SlashCommand for VoiceCommand {
     fn help(&self) -> &str {
         "Usage: /voice [on|off|status]\n\n\
          Enables or disables voice input (push-to-talk).\n\
-         Setting is persisted to ~/.claurst/ui-settings.json.\n\n\
+         Setting is persisted to ~/.cyphes/ui-settings.json.\n\n\
          Transcription is performed via a Whisper-compatible API.\n\
          Set one of these env vars for the API key:\n\
            OPENAI_API_KEY   — OpenAI Whisper (default endpoint)\n\
@@ -6201,16 +6201,16 @@ impl SlashCommand for UpgradeCommand {
     fn description(&self) -> &str { "Check for updates and download the latest release" }
     fn help(&self) -> &str {
         "Usage: /update\n\n\
-         Checks GitHub releases for the latest version of Claurst.\n\
+         Checks GitHub releases for the latest version of CYPHES.\n\
          If a newer version is available, shows where to download it."
     }
 
     async fn execute(&self, _args: &str, _ctx: &mut CommandContext) -> CommandResult {
-        let current = claurst_core::constants::APP_VERSION;
+        let current = cyphes_core::constants::APP_VERSION;
 
         // Check GitHub releases API for latest version
         let client = reqwest::Client::builder()
-            .user_agent(format!("claurst/{}", current))
+            .user_agent(format!("cyphes/{}", current))
             .timeout(std::time::Duration::from_secs(8))
             .build();
 
@@ -6220,13 +6220,13 @@ impl SlashCommand for UpgradeCommand {
                 return CommandResult::Message(format!(
                     "Current version: {current}\n\
                      Could not check for updates (HTTP client error: {e})\n\
-                     Visit https://github.com/kuberwastaken/claurst/releases for updates."
+                     Visit https://github.com/CYPHES-ATP/node/releases for updates."
                 ))
             }
         };
 
         let resp = client
-            .get("https://api.github.com/repos/kuberwastaken/claurst/releases/latest")
+            .get("https://api.github.com/repos/CYPHES-ATP/node/releases/latest")
             .send()
             .await;
 
@@ -6244,11 +6244,11 @@ impl SlashCommand for UpgradeCommand {
                 let url = json
                     .get("html_url")
                     .and_then(|v| v.as_str())
-                    .unwrap_or("https://github.com/kuberwastaken/claurst/releases");
+                    .unwrap_or("https://github.com/CYPHES-ATP/node/releases");
 
                 if tag == current || tag == "unknown" {
                     CommandResult::Message(format!(
-                        "Claurst v{current} - you are up to date.\n\
+                        "CYPHES v{current} - you are up to date.\n\
                          Release page: {url}"
                     ))
                 } else {
@@ -6258,9 +6258,9 @@ impl SlashCommand for UpgradeCommand {
                          Latest version:   v{tag}\n\
                          Release page:     {url}\n\n\
                          Upgrade in place (recommended):\n\
-                           claurst upgrade\n\n\
+                           cyphes upgrade\n\n\
                          Or build from source:\n\
-                           cargo install claurst --force"
+                           cargo install cyphes --force"
                     ))
                 }
             }
@@ -6269,13 +6269,13 @@ impl SlashCommand for UpgradeCommand {
                 CommandResult::Message(format!(
                     "Current version: v{current}\n\
                      Could not check for updates (HTTP {status}).\n\
-                     Visit https://github.com/kuberwastaken/claurst/releases for updates."
+                     Visit https://github.com/CYPHES-ATP/node/releases for updates."
                 ))
             }
             Err(e) => CommandResult::Message(format!(
                 "Current version: v{current}\n\
                  Could not check for updates: {e}\n\
-                 Visit https://github.com/kuberwastaken/claurst/releases for updates."
+                 Visit https://github.com/CYPHES-ATP/node/releases for updates."
             )),
         }
     }
@@ -6294,7 +6294,7 @@ impl SlashCommand for ReleaseNotesCommand {
     }
 
     async fn execute(&self, args: &str, _ctx: &mut CommandContext) -> CommandResult {
-        let current = claurst_core::constants::APP_VERSION;
+        let current = cyphes_core::constants::APP_VERSION;
         let version = args.trim();
 
         let tag = if version.is_empty() {
@@ -6306,7 +6306,7 @@ impl SlashCommand for ReleaseNotesCommand {
         };
 
         let client = reqwest::Client::builder()
-            .user_agent(format!("claurst/{}", current))
+            .user_agent(format!("cyphes/{}", current))
             .timeout(std::time::Duration::from_secs(8))
             .build();
 
@@ -6314,14 +6314,14 @@ impl SlashCommand for ReleaseNotesCommand {
             Ok(c) => c,
             Err(_) => {
                 return CommandResult::Message(format!(
-                    "Claurst {tag} release notes:\n\
-                     Visit https://github.com/kuberwastaken/claurst/releases/tag/{tag}"
+                    "CYPHES {tag} release notes:\n\
+                     Visit https://github.com/CYPHES-ATP/node/releases/tag/{tag}"
                 ))
             }
         };
 
         let url = format!(
-            "https://api.github.com/repos/kuberwastaken/claurst/releases/tags/{}",
+            "https://api.github.com/repos/CYPHES-ATP/node/releases/tags/{}",
             tag
         );
 
@@ -6346,7 +6346,7 @@ impl SlashCommand for ReleaseNotesCommand {
                     .unwrap_or("");
 
                 CommandResult::Message(format!(
-                    "Release Notes: Claurst {tag}\n\
+                    "Release Notes: CYPHES {tag}\n\
                      Published: {published}\n\
                      URL: {html_url}\n\
                      ─────────────────────────────────\n\
@@ -6355,17 +6355,17 @@ impl SlashCommand for ReleaseNotesCommand {
             }
             Ok(r) if r.status().as_u16() == 404 => CommandResult::Message(format!(
                 "No release found for {tag}.\n\
-                 View all releases: https://github.com/kuberwastaken/claurst/releases"
+                 View all releases: https://github.com/CYPHES-ATP/node/releases"
             )),
             Ok(r) => CommandResult::Message(format!(
                 "Could not fetch release notes (HTTP {}).\n\
-                 View at: https://github.com/kuberwastaken/claurst/releases/tag/{}",
+                 View at: https://github.com/CYPHES-ATP/node/releases/tag/{}",
                 r.status(),
                 tag
             )),
             Err(e) => CommandResult::Message(format!(
                 "Could not fetch release notes: {e}\n\
-                 View at: https://github.com/kuberwastaken/claurst/releases/tag/{tag}"
+                 View at: https://github.com/CYPHES-ATP/node/releases/tag/{tag}"
             )),
         }
     }
@@ -6380,12 +6380,12 @@ impl SlashCommand for RateLimitOptionsCommand {
     fn help(&self) -> &str {
         "Usage: /rate-limit-options\n\n\
          Displays available rate limit tiers and the current tier for your account.\n\
-         Rate limits depend on your Claurst plan (Free, Pro, Max, API)."
+         Rate limits depend on your CYPHES plan (Free, Pro, Max, API)."
     }
 
     async fn execute(&self, _args: &str, ctx: &mut CommandContext) -> CommandResult {
         // Try to read from OAuth tokens file to get subscription/tier info
-        let tier_info = match claurst_core::oauth::OAuthTokens::load().await {
+        let tier_info = match cyphes_core::oauth::OAuthTokens::load().await {
             Some(tokens) => {
                 let sub_type = tokens.subscription_type.as_deref().unwrap_or("unknown");
                 format!(
@@ -6435,7 +6435,7 @@ impl SlashCommand for StatuslineCommand {
     fn help(&self) -> &str {
         "Usage: /statusline [show|hide] [cost|tokens|model|time|all]\n\n\
          Controls which items appear in the TUI status bar at the bottom.\n\
-         Settings are persisted to ~/.claurst/ui-settings.json.\n\n\
+         Settings are persisted to ~/.cyphes/ui-settings.json.\n\n\
          Examples:\n\
            /statusline               — show current configuration\n\
            /statusline show cost     — show cost in status line\n\
@@ -6529,7 +6529,7 @@ impl SlashCommand for SecurityReviewCommand {
     fn description(&self) -> &str { "Run a security review of the current project" }
     fn help(&self) -> &str {
         "Usage: /security-review [path]\n\n\
-         Asks Claurst to perform a security review of the codebase.\n\
+         Asks CYPHES to perform a security review of the codebase.\n\
          Analyzes for common vulnerabilities: injection attacks, auth issues,\n\
          secrets exposure, unsafe deserialization, path traversal, etc."
     }
@@ -6571,11 +6571,11 @@ impl SlashCommand for SecurityReviewCommand {
 #[async_trait]
 impl SlashCommand for TerminalSetupCommand {
     fn name(&self) -> &str { "terminal-setup" }
-    fn description(&self) -> &str { "Help configure your terminal for optimal Claurst use" }
+    fn description(&self) -> &str { "Help configure your terminal for optimal CYPHES use" }
     fn help(&self) -> &str {
         "Usage: /terminal-setup\n\n\
          Diagnoses your terminal environment and gives recommendations for\n\
-         optimal Claurst display (font, color support, Unicode, etc.)."
+         optimal CYPHES display (font, color support, Unicode, etc.)."
     }
 
     async fn execute(&self, _args: &str, _ctx: &mut CommandContext) -> CommandResult {
@@ -6639,7 +6639,7 @@ impl SlashCommand for TerminalSetupCommand {
             "Terminal Setup Diagnostic\n\
              ─────────────────────────\n\
              {checks}\n\n\
-             Recommendations for optimal Claurst experience:\n\
+             Recommendations for optimal CYPHES experience:\n\
              ─────────────────────────────────────────────────\n\
              1. Font: Use a Nerd Font for box-drawing characters and icons\n\
                 {nerd_hint}\n\
@@ -6690,7 +6690,7 @@ impl SlashCommand for ExtraUsageCommand {
 
         // Estimate API calls from messages (each assistant message ~ 1 API call)
         let api_calls = ctx.messages.iter()
-            .filter(|m| m.role == claurst_core::types::Role::Assistant)
+            .filter(|m| m.role == cyphes_core::types::Role::Assistant)
             .count();
         let api_calls = api_calls.max(1); // at least 1 if we have any data
 
@@ -6765,7 +6765,7 @@ impl SlashCommand for AdvisorCommand {
 
     async fn execute(&self, args: &str, _ctx: &mut CommandContext) -> CommandResult {
         let arg = args.trim();
-        let settings_dir = claurst_core::config::Settings::config_dir();
+        let settings_dir = cyphes_core::config::Settings::config_dir();
         let settings_path = settings_dir.join("settings.json");
 
         // Read or create settings JSON
@@ -6817,24 +6817,24 @@ impl SlashCommand for AdvisorCommand {
 #[async_trait]
 impl SlashCommand for InstallSlackAppCommand {
     fn name(&self) -> &str { "install-slack-app" }
-    fn description(&self) -> &str { "Install the Claurst Slack integration" }
+    fn description(&self) -> &str { "Install the CYPHES Slack integration" }
     fn help(&self) -> &str {
         "Usage: /install-slack-app\n\n\
-         Opens instructions for installing the Claurst Slack app.\n\
-         Requires a Claurst for Enterprise subscription."
+         Opens instructions for installing the CYPHES Slack app.\n\
+         Requires a CYPHES for Enterprise subscription."
     }
 
     async fn execute(&self, _args: &str, _ctx: &mut CommandContext) -> CommandResult {
         CommandResult::Message(
-            "Claurst Slack Integration\n\
+            "CYPHES Slack Integration\n\
              ─────────────────────────────\n\
-             To install Claurst in Slack:\n\n\
-             1. Ensure you have a Claurst for Enterprise subscription\n\
+             To install CYPHES in Slack:\n\n\
+             1. Ensure you have a CYPHES for Enterprise subscription\n\
              2. Visit your Anthropic Console → Integrations → Slack\n\
              3. Click \"Add to Slack\" and authorize the app\n\
-             4. Invite @Claurst to any channel with: /invite @Claurst\n\n\
+             4. Invite @CYPHES to any channel with: /invite @CYPHES\n\n\
              In Slack, you can then:\n\
-             • Mention @Claurst to ask questions in any channel\n\
+             • Mention @CYPHES to ask questions in any channel\n\
              • Use /claude for direct commands\n\
              • Share code snippets for review\n\n\
              See: https://docs.anthropic.com/claude-code/slack"
@@ -6854,7 +6854,7 @@ impl SlashCommand for FastCommand {
         "Usage: /fast [on|off]\n\n\
          Fast mode switches to the active provider's smaller, faster model\n\
          for quick responses. Toggle without argument to switch.\n\
-         The setting is persisted to ~/.claurst/ui-settings.json."
+         The setting is persisted to ~/.cyphes/ui-settings.json."
     }
 
     async fn execute(&self, args: &str, ctx: &mut CommandContext) -> CommandResult {
@@ -6937,7 +6937,7 @@ impl SlashCommand for ThinkBackCommand {
             .messages
             .iter()
             .enumerate()
-            .filter(|(_, m)| m.role == claurst_core::types::Role::Assistant)
+            .filter(|(_, m)| m.role == cyphes_core::types::Role::Assistant)
             .filter_map(|(idx, m)| {
                 let blocks = m.get_thinking_blocks();
                 if blocks.is_empty() {
@@ -6946,7 +6946,7 @@ impl SlashCommand for ThinkBackCommand {
                 let thinking: String = blocks
                     .iter()
                     .filter_map(|b| {
-                        if let claurst_core::types::ContentBlock::Thinking { thinking, .. } = b {
+                        if let cyphes_core::types::ContentBlock::Thinking { thinking, .. } = b {
                             Some(thinking.as_str())
                         } else {
                             None
@@ -6962,7 +6962,7 @@ impl SlashCommand for ThinkBackCommand {
             return CommandResult::Message(
                 "No thinking traces found in this session.\n\
                  Thinking traces appear when the model uses extended thinking mode.\n\
-                 Try asking Claurst to 'think step by step' or 'think carefully'."
+                 Try asking CYPHES to 'think step by step' or 'think carefully'."
                     .to_string(),
             );
         }
@@ -7004,7 +7004,7 @@ impl SlashCommand for ThinkBackPlayCommand {
         let thinking_blocks: Vec<String> = ctx
             .messages
             .iter()
-            .filter(|m| m.role == claurst_core::types::Role::Assistant)
+            .filter(|m| m.role == cyphes_core::types::Role::Assistant)
             .filter_map(|m| {
                 let blocks = m.get_thinking_blocks();
                 if blocks.is_empty() {
@@ -7013,7 +7013,7 @@ impl SlashCommand for ThinkBackPlayCommand {
                 let t: String = blocks
                     .iter()
                     .filter_map(|b| {
-                        if let claurst_core::types::ContentBlock::Thinking { thinking, .. } = b {
+                        if let cyphes_core::types::ContentBlock::Thinking { thinking, .. } = b {
                             Some(thinking.as_str())
                         } else {
                             None
@@ -7153,7 +7153,7 @@ impl SlashCommand for SearchCommand {
     fn help(&self) -> &str {
         "Usage: /search <query>\n\n\
          Searches session titles and message content in the local SQLite\n\
-         session database (~/.claurst/sessions.db).  Returns the 50 best\n\
+         session database (~/.cyphes/sessions.db).  Returns the 50 best\n\
          matching sessions, ordered by most recently updated.\n\n\
          Example: /search refactor authentication"
     }
@@ -7168,9 +7168,9 @@ impl SlashCommand for SearchCommand {
             );
         }
 
-        let db_path = claurst_core::config::Settings::config_dir().join("sessions.db");
+        let db_path = cyphes_core::config::Settings::config_dir().join("sessions.db");
 
-        let store = match claurst_core::SqliteSessionStore::open(&db_path) {
+        let store = match cyphes_core::SqliteSessionStore::open(&db_path) {
             Ok(s) => s,
             Err(e) => {
                 return CommandResult::Error(format!(
@@ -7223,8 +7223,8 @@ impl SlashCommand for SearchCommand {
 
 /// Serialisable bundle written to / read from a `.teleport` file.
 mod teleport_bundle {
-    use claurst_core::permissions::{PermissionAction, SerializedPermissionRule};
-    use claurst_core::types::Message;
+    use cyphes_core::permissions::{PermissionAction, SerializedPermissionRule};
+    use cyphes_core::types::Message;
     use serde::{Deserialize, Serialize};
 
     pub const BUNDLE_VERSION: &str = "1";
@@ -7283,7 +7283,7 @@ impl SlashCommand for TeleportCommand {
          \n\
          /teleport export [--output <file>]\n\
          \x20 Serialize the current session to a .teleport JSON bundle.\n\
-         \x20 Defaults to ~/.claurst/teleport_<session_id>.json\n\
+         \x20 Defaults to ~/.cyphes/teleport_<session_id>.json\n\
          \n\
          /teleport import <file>\n\
          \x20 Load a .teleport bundle and restore messages, working dir, and\n\
@@ -7326,10 +7326,10 @@ impl SlashCommand for TeleportCommand {
                     if let Some(p) = explicit {
                         p
                     } else {
-                        // Default: ~/.claurst/teleport_<session_id>.json
+                        // Default: ~/.cyphes/teleport_<session_id>.json
                         let base = dirs::home_dir()
                             .unwrap_or_else(|| std::path::PathBuf::from("."))
-                            .join(".claurst");
+                            .join(".cyphes");
                         let _ = std::fs::create_dir_all(&base);
                         base.join(format!("teleport_{}.json", ctx.session_id))
                     }
@@ -7337,7 +7337,7 @@ impl SlashCommand for TeleportCommand {
 
                 // ---- collect recently accessed file paths from messages ----
                 let files: Vec<String> = {
-                    use claurst_core::types::{ContentBlock, MessageContent};
+                    use cyphes_core::types::{ContentBlock, MessageContent};
                     let mut seen: Vec<String> = Vec::new();
                     for msg in &ctx.messages {
                         if let MessageContent::Blocks(blocks) = &msg.content {
@@ -7378,14 +7378,14 @@ impl SlashCommand for TeleportCommand {
                     .provider_configs
                     .keys()
                     .flat_map(|provider_id| {
-                        claurst_core::config::api_key_env_vars_for_provider(provider_id)
+                        cyphes_core::config::api_key_env_vars_for_provider(provider_id)
                             .iter()
                             .copied()
                     })
                     .map(str::to_string)
                     .collect();
                 redacted_env_vars.extend(
-                    claurst_core::config::api_key_env_vars_for_provider(ctx.config.selected_provider_id())
+                    cyphes_core::config::api_key_env_vars_for_provider(ctx.config.selected_provider_id())
                         .iter()
                         .copied()
                         .map(str::to_string),
@@ -7403,7 +7403,7 @@ impl SlashCommand for TeleportCommand {
                     let denied: Vec<String> = ctx.config.disallowed_tools.clone();
                     // Build minimal SerializedPermissionRule list from config lists.
                     let mut rules = Vec::new();
-                    use claurst_core::permissions::{PermissionAction, SerializedPermissionRule};
+                    use cyphes_core::permissions::{PermissionAction, SerializedPermissionRule};
                     for name in &allowed {
                         rules.push(SerializedPermissionRule {
                             tool_name: Some(name.clone()),
@@ -7558,7 +7558,7 @@ impl SlashCommand for TeleportCommand {
                 let permissions = {
                     let allowed = ctx.config.allowed_tools.clone();
                     let denied = ctx.config.disallowed_tools.clone();
-                    use claurst_core::permissions::{PermissionAction, SerializedPermissionRule};
+                    use cyphes_core::permissions::{PermissionAction, SerializedPermissionRule};
                     let mut rules = Vec::new();
                     for name in &allowed {
                         rules.push(SerializedPermissionRule {
@@ -7700,7 +7700,7 @@ impl SlashCommand for CtxVizCommand {
             |(conv, tool), msg| {
                 let text = msg.get_all_text();
                 // Heuristic: if the message looks like a tool result, count separately
-                if msg.role == claurst_core::types::Role::User && text.starts_with('[') {
+                if msg.role == cyphes_core::types::Role::User && text.starts_with('[') {
                     (conv, tool + text.len())
                 } else {
                     (conv + text.len(), tool)
@@ -7956,10 +7956,10 @@ impl SlashCommand for InsightsCommand {
 
         // Count turns (user / assistant pairs)
         let user_turns: usize = messages.iter()
-            .filter(|m| matches!(m.role, claurst_core::types::Role::User))
+            .filter(|m| matches!(m.role, cyphes_core::types::Role::User))
             .count();
         let assistant_turns: usize = messages.iter()
-            .filter(|m| matches!(m.role, claurst_core::types::Role::Assistant))
+            .filter(|m| matches!(m.role, cyphes_core::types::Role::Assistant))
             .count();
         let total_turns = user_turns.min(assistant_turns);
 
@@ -7968,7 +7968,7 @@ impl SlashCommand for InsightsCommand {
             std::collections::HashMap::new();
         for msg in messages {
             for block in msg.get_tool_use_blocks() {
-                if let claurst_core::types::ContentBlock::ToolUse { name, .. } = block {
+                if let cyphes_core::types::ContentBlock::ToolUse { name, .. } = block {
                     *tool_counts.entry(name.clone()).or_insert(0) += 1;
                 }
             }
@@ -8185,7 +8185,7 @@ impl SlashCommand for RevertCommand {
     }
 
     async fn execute(&self, args: &str, ctx: &mut CommandContext) -> CommandResult {
-        let snap = match claurst_core::snapshot::get_or_create(&ctx.working_dir) {
+        let snap = match cyphes_core::snapshot::get_or_create(&ctx.working_dir) {
             Some(s) => s,
             None => return CommandResult::Error(
                 "Snapshot system unavailable (git not found or not a git repo).".into()
@@ -8193,9 +8193,9 @@ impl SlashCommand for RevertCommand {
         };
 
         // Collect assistant messages that have a snapshot patch (newest last).
-        let checkpoints: Vec<&claurst_core::types::Message> = ctx.messages.iter()
+        let checkpoints: Vec<&cyphes_core::types::Message> = ctx.messages.iter()
             .filter(|m| {
-                m.role == claurst_core::types::Role::Assistant
+                m.role == cyphes_core::types::Role::Assistant
                     && m.snapshot_patch.is_some()
             })
             .collect();
@@ -8233,7 +8233,7 @@ impl SlashCommand for RevertCommand {
             None => return CommandResult::Error("Target turn has no uuid; cannot revert.".into()),
         };
 
-        let patches: Vec<claurst_core::snapshot::Patch> = ctx.messages.iter()
+        let patches: Vec<cyphes_core::snapshot::Patch> = ctx.messages.iter()
             .skip_while(|m| m.uuid.as_deref() != Some(&target_uuid))
             .filter_map(|m| m.snapshot_patch.clone())
             .collect();
@@ -8246,11 +8246,11 @@ impl SlashCommand for RevertCommand {
         snap.revert(&patches).await;
 
         // Truncate the session transcript at the target turn.
-        let project_root = claurst_core::git_utils::get_repo_root(&ctx.working_dir)
+        let project_root = cyphes_core::git_utils::get_repo_root(&ctx.working_dir)
             .unwrap_or_else(|| ctx.working_dir.clone());
-        let path = claurst_core::session_storage::transcript_path(&project_root, &ctx.session_id);
+        let path = cyphes_core::session_storage::transcript_path(&project_root, &ctx.session_id);
         if path.exists() {
-            if let Err(e) = claurst_core::session_storage::truncate_after(&path, &target_uuid).await {
+            if let Err(e) = cyphes_core::session_storage::truncate_after(&path, &target_uuid).await {
                 return CommandResult::Error(format!("Reverted files but could not trim transcript: {e}"));
             }
         }
@@ -8276,10 +8276,10 @@ impl SlashCommand for CheckpointsCommand {
     }
 
     async fn execute(&self, _args: &str, ctx: &mut CommandContext) -> CommandResult {
-        let checkpoints: Vec<(usize, &claurst_core::types::Message)> = ctx.messages.iter()
+        let checkpoints: Vec<(usize, &cyphes_core::types::Message)> = ctx.messages.iter()
             .enumerate()
             .filter(|(_, m)| {
-                m.role == claurst_core::types::Role::Assistant
+                m.role == cyphes_core::types::Role::Assistant
                     && m.snapshot_patch.is_some()
             })
             .collect();
@@ -8338,7 +8338,7 @@ impl SlashCommand for SnapshotDiffCommand {
     }
 
     async fn execute(&self, args: &str, ctx: &mut CommandContext) -> CommandResult {
-        let snap = match claurst_core::snapshot::get_or_create(&ctx.working_dir) {
+        let snap = match cyphes_core::snapshot::get_or_create(&ctx.working_dir) {
             Some(s) => s,
             None => return CommandResult::Error(
                 "Snapshot system unavailable (git not found or not a git repo).".into()
@@ -8352,9 +8352,9 @@ impl SlashCommand for SnapshotDiffCommand {
             args.to_string()
         } else {
             // Otherwise find the n-th most recent checkpoint.
-            let checkpoints: Vec<&claurst_core::snapshot::Patch> = ctx.messages.iter()
+            let checkpoints: Vec<&cyphes_core::snapshot::Patch> = ctx.messages.iter()
                 .filter_map(|m| {
-                    if m.role == claurst_core::types::Role::Assistant {
+                    if m.role == cyphes_core::types::Role::Assistant {
                         m.snapshot_patch.as_ref()
                     } else {
                         None
@@ -8404,7 +8404,7 @@ impl SlashCommand for ProvidersCommand {
     }
 
     async fn execute(&self, _args: &str, _ctx: &mut CommandContext) -> CommandResult {
-        let registry = claurst_api::ModelRegistry::new();
+        let registry = cyphes_api::ModelRegistry::new();
         let all = registry.list_all();
 
         if all.is_empty() {
@@ -8470,15 +8470,15 @@ impl SlashCommand for AgentCommand {
     fn name(&self) -> &str { "agent" }
     fn description(&self) -> &str { "List available agents or get info about a specific agent" }
     fn help(&self) -> &str {
-        "Usage: /agent [name]\n\nWithout arguments, lists all available named agents.\nWith a name, shows details for that agent.\n\nTo use an agent, start Claurst with: --agent <name>"
+        "Usage: /agent [name]\n\nWithout arguments, lists all available named agents.\nWith a name, shows details for that agent.\n\nTo use an agent, start CYPHES with: --agent <name>"
     }
 
     async fn execute(&self, args: &str, ctx: &mut CommandContext) -> CommandResult {
         use std::collections::HashMap;
 
         // Merge built-in defaults with user-defined agents (user wins on collision).
-        let mut all_agents: HashMap<String, claurst_core::AgentDefinition> =
-            claurst_core::default_agents();
+        let mut all_agents: HashMap<String, cyphes_core::AgentDefinition> =
+            cyphes_core::default_agents();
         all_agents.extend(ctx.config.agents.clone());
 
         let agent_name = args.trim();
@@ -8505,7 +8505,7 @@ impl SlashCommand for AgentCommand {
                         .unwrap_or_default(),
                 ));
             }
-            output.push_str("\nUse --agent <name> when starting Claurst to activate an agent.");
+            output.push_str("\nUse --agent <name> when starting CYPHES to activate an agent.");
             CommandResult::Message(output)
         } else if let Some(def) = all_agents.get(agent_name) {
             // Show details for the named agent.
@@ -8527,7 +8527,7 @@ impl SlashCommand for AgentCommand {
                 output.push_str(&format!("\nSystem prompt prefix:\n  {}\n", prompt));
             }
             output.push_str(&format!(
-                "\nTo activate: claurst --agent {}", agent_name
+                "\nTo activate: cyphes --agent {}", agent_name
             ));
             CommandResult::Message(output)
         } else {
@@ -8565,7 +8565,7 @@ impl SlashCommand for ManagedAgentsCommand {
     }
 
     async fn execute(&self, args: &str, ctx: &mut CommandContext) -> CommandResult {
-        use claurst_core::{BudgetSplitPolicy, ManagedAgentConfig, builtin_managed_agent_presets};
+        use cyphes_core::{BudgetSplitPolicy, ManagedAgentConfig, builtin_managed_agent_presets};
 
         let args = args.trim();
 
@@ -8893,7 +8893,7 @@ pub fn all_commands() -> Vec<Box<dyn SlashCommand>> {
             slash_name: "add-dir",
             target_name: "add-dir",
             slash_aliases: &[],
-            slash_description: "Add a directory to Claurst's allowed workspace paths",
+            slash_description: "Add a directory to CYPHES's allowed workspace paths",
             slash_help: "Usage: /add-dir <path>",
         }),
         Box::new(NamedCommandAdapter {
@@ -8921,7 +8921,7 @@ pub fn all_commands() -> Vec<Box<dyn SlashCommand>> {
             slash_name: "passes",
             target_name: "passes",
             slash_aliases: &[],
-            slash_description: "Share a free week of Claurst with friends",
+            slash_description: "Share a free week of CYPHES with friends",
             slash_help: "Usage: /passes",
         }),
         Box::new(NamedCommandAdapter {
@@ -8942,28 +8942,28 @@ pub fn all_commands() -> Vec<Box<dyn SlashCommand>> {
             slash_name: "desktop",
             target_name: "desktop",
             slash_aliases: &[],
-            slash_description: "Open the Claurst desktop app",
+            slash_description: "Open the CYPHES desktop app",
             slash_help: "Usage: /desktop",
         }),
         Box::new(NamedCommandAdapter {
             slash_name: "mobile",
             target_name: "mobile",
             slash_aliases: &[],
-            slash_description: "Set up Claurst on mobile",
+            slash_description: "Set up CYPHES on mobile",
             slash_help: "Usage: /mobile",
         }),
         Box::new(NamedCommandAdapter {
             slash_name: "install-github-app",
             target_name: "install-github-app",
             slash_aliases: &[],
-            slash_description: "Set up Claurst GitHub Actions for a repository",
+            slash_description: "Set up CYPHES GitHub Actions for a repository",
             slash_help: "Usage: /install-github-app",
         }),
         Box::new(NamedCommandAdapter {
             slash_name: "web-setup",
             target_name: "remote-setup",
             slash_aliases: &["remote-setup"],
-            slash_description: "Configure a remote Claurst environment",
+            slash_description: "Configure a remote CYPHES environment",
             slash_help: "Usage: /web-setup",
         }),
         Box::new(NamedCommandAdapter {
@@ -9034,11 +9034,11 @@ pub fn find_command(name: &str) -> Option<Box<dyn SlashCommand>> {
 
 /// Build `HelpEntry` values for all non-hidden commands, suitable for
 /// populating `HelpOverlay::commands` at startup.
-pub fn build_help_entries() -> Vec<claurst_tui::overlays::HelpEntry> {
+pub fn build_help_entries() -> Vec<cyphes_tui::overlays::HelpEntry> {
     all_commands()
         .iter()
         .filter(|c| !c.hidden())
-        .map(|c| claurst_tui::overlays::HelpEntry {
+        .map(|c| cyphes_tui::overlays::HelpEntry {
             name: c.name().to_string(),
             aliases: c.aliases().join(", "),
             description: c.description().to_string(),
@@ -9054,7 +9054,7 @@ pub fn build_help_entries() -> Vec<claurst_tui::overlays::HelpEntry> {
 /// A slash command backed by a user-defined template in `settings.json`.
 struct TemplateCommand {
     name: String,
-    template: claurst_core::CommandTemplate,
+    template: cyphes_core::CommandTemplate,
 }
 
 #[async_trait]
@@ -9077,7 +9077,7 @@ impl SlashCommand for TemplateCommand {
 
 /// Build slash commands from user-defined command templates stored in
 /// `settings.commands`.
-pub fn commands_from_settings(settings: &claurst_core::Settings) -> Vec<Box<dyn SlashCommand>> {
+pub fn commands_from_settings(settings: &cyphes_core::Settings) -> Vec<Box<dyn SlashCommand>> {
     settings.commands.iter().map(|(name, template)| {
         Box::new(TemplateCommand {
             name: name.clone(),
@@ -9087,7 +9087,7 @@ pub fn commands_from_settings(settings: &claurst_core::Settings) -> Vec<Box<dyn 
 }
 
 // ---------------------------------------------------------------------------
-// Discovered skill commands (from .claurst/skills/ and git URLs)
+// Discovered skill commands (from .cyphes/skills/ and git URLs)
 // ---------------------------------------------------------------------------
 
 /// A slash command backed by a discovered skill markdown file.
@@ -9122,9 +9122,9 @@ impl SlashCommand for SkillCommand {
 /// with a built-in command will be silently skipped.
 pub fn commands_from_discovered_skills(
     cwd: &std::path::Path,
-    skills_config: &claurst_core::SkillsConfig,
+    skills_config: &cyphes_core::SkillsConfig,
 ) -> Vec<Box<dyn SlashCommand>> {
-    let discovered = claurst_core::discover_skills(cwd, skills_config);
+    let discovered = cyphes_core::discover_skills(cwd, skills_config);
     // Build a set of built-in command names so we can skip collisions.
     let all_cmds = all_commands();
     let builtin_names: std::collections::HashSet<&str> = all_cmds
@@ -9150,8 +9150,8 @@ pub async fn execute_command(
     input: &str,
     ctx: &mut CommandContext,
 ) -> Option<CommandResult> {
-    if !claurst_tui::input::is_slash_command(input) { return None; }
-    let (name, args) = claurst_tui::input::parse_slash_command(input);
+    if !cyphes_tui::input::is_slash_command(input) { return None; }
+    let (name, args) = cyphes_tui::input::parse_slash_command(input);
 
     // First check built-in commands.
     if let Some(cmd) = find_command(name) {
@@ -9165,9 +9165,9 @@ pub async fn execute_command(
         return Some(tc.execute(args, ctx).await);
     }
 
-    // Check discovered skill commands (from .claurst/skills/, git URLs, etc.).
+    // Check discovered skill commands (from .cyphes/skills/, git URLs, etc.).
     {
-        let discovered = claurst_core::discover_skills(&ctx.working_dir, &ctx.config.skills);
+        let discovered = cyphes_core::discover_skills(&ctx.working_dir, &ctx.config.skills);
         if let Some(skill) = discovered.get(cmd_name) {
             let sc = SkillCommand {
                 name: skill.name.clone(),
@@ -9180,7 +9180,7 @@ pub async fn execute_command(
 
     // Then check plugin-defined slash commands.
     let project_dir = ctx.working_dir.clone();
-    let registry = claurst_plugins::load_plugins(&project_dir, &[]).await;
+    let registry = cyphes_plugins::load_plugins(&project_dir, &[]).await;
     for cmd_def in registry.all_command_defs() {
         if cmd_def.name == cmd_name {
             let adapter = PluginSlashCommandAdapter { def: cmd_def };
@@ -9197,7 +9197,7 @@ pub async fn execute_command(
 pub mod named_commands;
 
 // ---------------------------------------------------------------------------
-// Stats analytics (persisted transcript aggregation) — backs `claurst stats`.
+// Stats analytics (persisted transcript aggregation) — backs `cyphes stats`.
 // The current-session `/stats` slash command lives above; this module reads
 // JSONL transcripts on disk.
 // ---------------------------------------------------------------------------
@@ -9210,11 +9210,11 @@ pub mod stats;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use claurst_core::cost::CostTracker;
+    use cyphes_core::cost::CostTracker;
 
     fn make_ctx() -> CommandContext {
         CommandContext {
-            config: claurst_core::config::Config::default(),
+            config: cyphes_core::config::Config::default(),
             cost_tracker: CostTracker::new(),
             messages: vec![],
             working_dir: std::path::PathBuf::from("."),
@@ -9336,7 +9336,7 @@ mod tests {
         assert!(matches!(result, CommandResult::Message(_)));
         if let CommandResult::Message(msg) = result {
             assert!(
-                msg.contains("claude") || msg.contains("Claurst") || msg.contains('.'),
+                msg.contains("claude") || msg.contains("CYPHES") || msg.contains('.'),
                 "Version message should contain version number, got: {}",
                 msg
             );
@@ -9363,7 +9363,7 @@ mod tests {
                 login_with_claude_ai,
                 label,
             } => {
-                assert_eq!(provider, claurst_core::accounts::PROVIDER_ANTHROPIC);
+                assert_eq!(provider, cyphes_core::accounts::PROVIDER_ANTHROPIC);
                 assert!(login_with_claude_ai);
                 assert!(label.is_none());
             }
@@ -9382,7 +9382,7 @@ mod tests {
                 login_with_claude_ai,
                 ..
             } => {
-                assert_eq!(provider, claurst_core::accounts::PROVIDER_ANTHROPIC);
+                assert_eq!(provider, cyphes_core::accounts::PROVIDER_ANTHROPIC);
                 assert!(!login_with_claude_ai);
             }
             other => panic!("expected StartLoginForProvider, got {:?}", other),
@@ -9400,7 +9400,7 @@ mod tests {
                 label,
                 ..
             } => {
-                assert_eq!(provider, claurst_core::accounts::PROVIDER_CODEX);
+                assert_eq!(provider, cyphes_core::accounts::PROVIDER_CODEX);
                 assert_eq!(label.as_deref(), Some("work"));
             }
             other => panic!("expected StartLoginForProvider, got {:?}", other),

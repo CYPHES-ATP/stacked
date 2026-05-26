@@ -1,6 +1,6 @@
 # Code Of Conduct
 
-Stacked is an educational and open-source project for building agentic coding systems with visible contracts, approvals, and receipts.
+CYPHES is an educational and open-source project for building agentic coding systems with visible contracts, approvals, and receipts.
 
 We expect contributors to be direct, respectful, and careful with one another's time.
 

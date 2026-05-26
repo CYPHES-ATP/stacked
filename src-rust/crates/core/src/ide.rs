@@ -30,16 +30,16 @@ impl IdeKind {
         }
     }
 
-    /// Install command for the Claurst extension (if known for this IDE).
+    /// Install command for the CYPHES extension (if known for this IDE).
     pub fn extension_install_command(&self) -> Option<String> {
         match self {
-            Self::VSCode => Some("code --install-extension claurst.claurst".to_string()),
+            Self::VSCode => Some("code --install-extension cyphes.cyphes".to_string()),
             Self::VSCodeInsiders => {
-                Some("code-insiders --install-extension claurst.claurst".to_string())
+                Some("code-insiders --install-extension cyphes.cyphes".to_string())
             }
-            Self::Cursor => Some("cursor --install-extension claurst.claurst".to_string()),
-            Self::Windsurf => Some("windsurf --install-extension claurst.claurst".to_string()),
-            Self::VSCodium => Some("codium --install-extension claurst.claurst".to_string()),
+            Self::Cursor => Some("cursor --install-extension cyphes.cyphes".to_string()),
+            Self::Windsurf => Some("windsurf --install-extension cyphes.cyphes".to_string()),
+            Self::VSCodium => Some("codium --install-extension cyphes.cyphes".to_string()),
             _ => None,
         }
     }

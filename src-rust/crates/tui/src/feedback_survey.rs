@@ -147,7 +147,7 @@ pub fn render_feedback_survey(
             vec![
                 Line::from(""),
                 Line::from(vec![Span::styled(
-                    "  How is Stacked doing this session? (optional)",
+                    "  How is CYPHES doing this session? (optional)",
                     Style::default().fg(Color::White),
                 )]),
                 Line::from(""),

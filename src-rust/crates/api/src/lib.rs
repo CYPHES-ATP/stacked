@@ -1,4 +1,4 @@
-// claurst-api: Anthropic API client with streaming SSE support for Claurst
+// cyphes-api: Anthropic API client with streaming SSE support for CYPHES
 // Rust port.
 //
 // Handles:
@@ -9,9 +9,9 @@
 // - Rate-limit (429) and overloaded (529) retry with exponential back-off
 // - Authentication via API key from env or config
 
-use claurst_core::constants::{ANTHROPIC_API_VERSION, ANTHROPIC_BETA_HEADER};
-use claurst_core::error::ClaudeError;
-use claurst_core::types::{ContentBlock, Message, MessageContent, Role, ToolDefinition, UsageInfo};
+use cyphes_core::constants::{ANTHROPIC_API_VERSION, ANTHROPIC_BETA_HEADER};
+use cyphes_core::error::ClaudeError;
+use cyphes_core::types::{ContentBlock, Message, MessageContent, Role, ToolDefinition, UsageInfo};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -440,7 +440,7 @@ pub mod client {
         fn default() -> Self {
             Self {
                 api_key: String::new(),
-                api_base: claurst_core::constants::ANTHROPIC_API_BASE.to_string(),
+                api_base: cyphes_core::constants::ANTHROPIC_API_BASE.to_string(),
                 api_version: ANTHROPIC_API_VERSION.to_string(),
                 beta_features: ANTHROPIC_BETA_HEADER.to_string(),
                 max_retries: 5,
@@ -480,7 +480,7 @@ pub mod client {
         ///
         /// 1. Prepend the required `"You are Claude Code, …"` system block.
         ///    Existing system content is preserved as a second block so the
-        ///    rest of Claurst's prompt assembly still reaches the model.
+        ///    rest of CYPHES's prompt assembly still reaches the model.
         ///
         /// No-op when `use_bearer_auth` is false (API-key flow).
         fn apply_oauth_stealth(&self, request: &mut CreateMessageRequest) {
@@ -490,7 +490,7 @@ pub mod client {
 
             let identity_block = SystemBlock {
                 block_type: "text".to_string(),
-                text: claurst_core::oauth_config::CLAUDE_CODE_SYSTEM_PROMPT_PREFIX.to_string(),
+                text: cyphes_core::oauth_config::CLAUDE_CODE_SYSTEM_PROMPT_PREFIX.to_string(),
                 cache_control: None,
             };
 
@@ -507,7 +507,7 @@ pub mod client {
                 Some(SystemPrompt::Blocks(mut blocks)) => {
                     // Avoid duplicating the identity block on retries / re-sends.
                     let already_first = blocks.first().is_some_and(|b| {
-                        b.text == claurst_core::oauth_config::CLAUDE_CODE_SYSTEM_PROMPT_PREFIX
+                        b.text == cyphes_core::oauth_config::CLAUDE_CODE_SYSTEM_PROMPT_PREFIX
                     });
                     if !already_first {
                         blocks.insert(0, identity_block);
@@ -530,7 +530,7 @@ pub mod client {
         }
 
         /// Convenience constructor that resolves the key from config/env.
-        pub fn from_config(cfg: &claurst_core::config::Config) -> anyhow::Result<Self> {
+        pub fn from_config(cfg: &cyphes_core::config::Config) -> anyhow::Result<Self> {
             let api_key = cfg
                 .resolve_api_key()
                 .ok_or_else(|| anyhow::anyhow!("No API key found"))?;
@@ -592,7 +592,7 @@ pub mod client {
                         model
                     )
                 } else {
-                    "Set ANTHROPIC_API_KEY, run `claurst auth login`, \
+                    "Set ANTHROPIC_API_KEY, run `cyphes auth login`, \
                      or use --provider to select a different provider (e.g. --provider openai).".to_string()
                 };
                 return Err(ClaudeError::Auth(
@@ -696,7 +696,7 @@ pub mod client {
                 } else if model.starts_with("llama") {
                     format!("Model '{}' looks like a Llama model. Use `--provider groq` or `--provider ollama` for local.", model)
                 } else {
-                    "Set ANTHROPIC_API_KEY, run `claurst auth login`, \
+                    "Set ANTHROPIC_API_KEY, run `cyphes auth login`, \
                      or use --provider to select a different provider (e.g. --provider openai).".to_string()
                 };
                 return Err(ClaudeError::Auth(
@@ -758,10 +758,10 @@ pub mod client {
             if self.config.use_bearer_auth {
                 let ua = format!(
                     "claude-cli/{}",
-                    claurst_core::oauth_config::CLAUDE_CODE_VERSION_FOR_OAUTH
+                    cyphes_core::oauth_config::CLAUDE_CODE_VERSION_FOR_OAUTH
                 );
                 req = req
-                    .header("anthropic-beta", claurst_core::oauth_config::OAUTH_BETA_FLAGS.join(","))
+                    .header("anthropic-beta", cyphes_core::oauth_config::OAUTH_BETA_FLAGS.join(","))
                     .header("user-agent", ua)
                     .header("x-app", "cli")
                     .header("Authorization", format!("Bearer {}", &self.config.api_key));
@@ -814,7 +814,7 @@ pub mod client {
                 // mismatch against the impersonated UA).
                 let anthropic_beta = if use_oauth {
                     let mut flags: Vec<&str> =
-                        claurst_core::oauth_config::OAUTH_BETA_FLAGS.to_vec();
+                        cyphes_core::oauth_config::OAUTH_BETA_FLAGS.to_vec();
                     if !self.config.beta_features.is_empty() {
                         flags.push(&self.config.beta_features);
                     }
@@ -834,7 +834,7 @@ pub mod client {
                 if use_oauth {
                     let ua = format!(
                         "claude-cli/{}",
-                        claurst_core::oauth_config::CLAUDE_CODE_VERSION_FOR_OAUTH
+                        cyphes_core::oauth_config::CLAUDE_CODE_VERSION_FOR_OAUTH
                     );
                     req = req
                         .header("user-agent", ua)

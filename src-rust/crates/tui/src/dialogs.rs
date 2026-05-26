@@ -90,7 +90,7 @@ impl PermissionRequest {
     }
 
     /// Build with a richer description derived from the full permission reason
-    /// text produced by `claurst_core::format_permission_reason`.
+    /// text produced by `cyphes_core::format_permission_reason`.
     ///
     /// The `reason` string may contain a newline splitting the one-liner from
     /// the danger explanation — this constructor splits on the first `\n` and
@@ -1423,9 +1423,9 @@ mod tests {
     #[test]
     fn word_wrap_mixed_short_and_long_tokens() {
         use unicode_width::UnicodeWidthStr;
-        // The realistic shape that broke claurst dialogs: a normal command
+        // The realistic shape that broke cyphes dialogs: a normal command
         // followed by a path longer than the column budget.
-        let cmd = "git diff 'X:\\Bigger-Projects\\Claurst\\very\\deep\\nested\\path.rs'";
+        let cmd = "git diff 'X:\\Bigger-Projects\\CYPHES\\very\\deep\\nested\\path.rs'";
         let wrapped = word_wrap(cmd, 24);
         for line in &wrapped {
             assert!(

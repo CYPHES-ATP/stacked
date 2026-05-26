@@ -1,10 +1,10 @@
 {
-  "id": "claurst",
-  "name": "Claurst",
+  "id": "cyphes",
+  "name": "CYPHES",
   "version": "0.1.4",
   "description": "Open-source, multi-provider terminal coding agent built in Rust. Multi-provider routing (Anthropic, OpenAI, Google, Groq, Ollama, OpenAI-compatible, …), full MCP support, plugin system, Rustle companion, chat forking, memory consolidation. No telemetry.",
-  "repository": "https://github.com/kuberwastaken/claurst",
-  "website": "https://claurst.kuber.studio",
+  "repository": "https://github.com/CYPHES-ATP/node",
+  "website": "https://cyphes.kuber.studio",
   "authors": [
     "Kuber Mehta"
   ],
@@ -12,28 +12,28 @@
   "distribution": {
     "binary": {
       "darwin-aarch64": {
-        "archive": "https://github.com/kuberwastaken/claurst/releases/download/v0.1.4/claurst-macos-aarch64.tar.gz",
-        "cmd": "./claurst",
+        "archive": "https://github.com/CYPHES-ATP/node/releases/download/v0.1.4/cyphes-macos-aarch64.tar.gz",
+        "cmd": "./cyphes",
         "args": ["acp"]
       },
       "darwin-x86_64": {
-        "archive": "https://github.com/kuberwastaken/claurst/releases/download/v0.1.4/claurst-macos-x86_64.tar.gz",
-        "cmd": "./claurst",
+        "archive": "https://github.com/CYPHES-ATP/node/releases/download/v0.1.4/cyphes-macos-x86_64.tar.gz",
+        "cmd": "./cyphes",
         "args": ["acp"]
       },
       "linux-aarch64": {
-        "archive": "https://github.com/kuberwastaken/claurst/releases/download/v0.1.4/claurst-linux-aarch64.tar.gz",
-        "cmd": "./claurst",
+        "archive": "https://github.com/CYPHES-ATP/node/releases/download/v0.1.4/cyphes-linux-aarch64.tar.gz",
+        "cmd": "./cyphes",
         "args": ["acp"]
       },
       "linux-x86_64": {
-        "archive": "https://github.com/kuberwastaken/claurst/releases/download/v0.1.4/claurst-linux-x86_64.tar.gz",
-        "cmd": "./claurst",
+        "archive": "https://github.com/CYPHES-ATP/node/releases/download/v0.1.4/cyphes-linux-x86_64.tar.gz",
+        "cmd": "./cyphes",
         "args": ["acp"]
       },
       "windows-x86_64": {
-        "archive": "https://github.com/kuberwastaken/claurst/releases/download/v0.1.4/claurst-windows-x86_64.zip",
-        "cmd": "./claurst.exe",
+        "archive": "https://github.com/CYPHES-ATP/node/releases/download/v0.1.4/cyphes-windows-x86_64.zip",
+        "cmd": "./cyphes.exe",
         "args": ["acp"]
       }
     }

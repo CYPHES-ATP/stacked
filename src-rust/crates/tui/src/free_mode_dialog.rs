@@ -35,9 +35,9 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
-use claurst_api::{FreeUpstream, FREE_CATALOG};
+use cyphes_api::{FreeUpstream, FREE_CATALOG};
 
-use crate::overlays::{centered_rect, render_dark_overlay, render_dialog_bg, CLAURST_PANEL_BG};
+use crate::overlays::{centered_rect, render_dark_overlay, render_dialog_bg, CYPHES_PANEL_BG};
 
 /// One row in the dialog — one provider's name, URL, and the user's
 /// (possibly empty) typed key.
@@ -208,7 +208,7 @@ pub fn render_free_mode_dialog(frame: &mut Frame, state: &FreeModeDialogState, a
     let dim = Color::Rgb(90, 90, 90);
     let muted = Color::Rgb(180, 180, 180);
     let tip = Color::Rgb(120, 210, 150);
-    let dialog_bg = CLAURST_PANEL_BG;
+    let dialog_bg = CYPHES_PANEL_BG;
 
     render_dark_overlay(frame, area);
 

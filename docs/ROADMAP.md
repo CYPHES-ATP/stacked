@@ -1,20 +1,20 @@
 # Roadmap
 
-This roadmap tracks Stacked as a CYPHES-branded fork of Claurst.
+This roadmap tracks CYPHES Node, the first local execution node for the CYPHES Agent Transfer Protocol.
 
 ## Phase 1.0: Foundation
 
-- Establish `cyphes/stacked` repository.
+- Establish `cyphes/node` repository.
 - Add license, notice, provenance, security, contribution, conduct, issue, and PR templates.
 - Record the runtime decision in an ADR.
-- Preserve upstream Claurst attribution and GPL-3.0 obligations.
+- Preserve upstream attribution and GPL-3.0 obligations.
 - Audit existing workflows before enabling public releases.
 
-## Phase 1.1: CYPHES UI Shell
+## Phase 1.1: CYPHES Node Shell
 
 - Replace top-level README, product pages, screenshots, and public copy.
-- Define Stacked command language, project tone, and visual tokens.
-- Replace visible Claurst naming in TUI surfaces.
+- Define CYPHES command language, project tone, and visual tokens.
+- Replace inherited naming in TUI surfaces.
 - Replace or remove upstream mascot-led assets with CYPHES execution/receipt surfaces.
 - Update GitHub Pages output or disable Pages until CYPHES assets are ready.
 
@@ -23,7 +23,7 @@ This roadmap tracks Stacked as a CYPHES-branded fork of Claurst.
 - Rename package metadata where legally and technically appropriate.
 - Update installer scripts and release artifact names.
 - Add compatibility aliases for old commands if needed during transition.
-- Update provider setup docs for Stacked.
+- Update provider setup docs for CYPHES.
 - Audit telemetry, share, gist, auth, and external-service flows before publication.
 
 ## Phase 1.3: Permission And Receipt UX
@@ -41,7 +41,7 @@ This roadmap tracks Stacked as a CYPHES-branded fork of Claurst.
 - Produce screenshots and a short internal demo.
 - Complete legal/provenance review before public release.
 
-## Phase 2.0: Stacked v0.1
+## Phase 2.0: CYPHES Node v0.1
 
 - Add three explicit agent roles: drafter, reviewer, synthesizer.
 - Support separate providers and models per role.

@@ -1,6 +1,6 @@
 // Integration tests for MCP template rendering
 
-use claurst_core::mcp_templates::TemplateRenderer;
+use cyphes_core::mcp_templates::TemplateRenderer;
 use serde_json::json;
 
 #[test]

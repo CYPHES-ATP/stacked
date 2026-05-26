@@ -7,11 +7,11 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use claurst_core::config::{Config, Settings};
-use claurst_core::permissions::PermissionManager;
-use claurst_core::CostTracker;
-use claurst_query::QueryConfig;
-use claurst_tools::Tool;
+use cyphes_core::config::{Config, Settings};
+use cyphes_core::permissions::PermissionManager;
+use cyphes_core::CostTracker;
+use cyphes_query::QueryConfig;
+use cyphes_tools::Tool;
 
 /// Snapshot of the global agent runtime — built at server startup, cloned
 /// (cheaply, via Arc) into each session.
@@ -19,12 +19,12 @@ use claurst_tools::Tool;
 pub struct AgentRuntime {
     pub config: Config,
     pub settings: Settings,
-    pub api_client: Arc<claurst_api::AnthropicClient>,
-    pub provider_registry: Arc<claurst_api::ProviderRegistry>,
+    pub api_client: Arc<cyphes_api::AnthropicClient>,
+    pub provider_registry: Arc<cyphes_api::ProviderRegistry>,
     pub tools: Arc<Vec<Box<dyn Tool>>>,
     pub cost_tracker: Arc<CostTracker>,
     pub query_config: QueryConfig,
-    pub mcp_manager: Option<Arc<claurst_mcp::McpManager>>,
+    pub mcp_manager: Option<Arc<cyphes_mcp::McpManager>>,
     pub permission_manager: Arc<std::sync::Mutex<PermissionManager>>,
     pub working_dir: PathBuf,
 }
@@ -39,8 +39,8 @@ impl AgentRuntime {
         let mut config = settings.effective_config();
         // Plan mode requires interactive UI — fall back to Default so the
         // ACP permission bridge can route decisions to the client.
-        if config.permission_mode == claurst_core::PermissionMode::Plan {
-            config.permission_mode = claurst_core::PermissionMode::Default;
+        if config.permission_mode == cyphes_core::PermissionMode::Plan {
+            config.permission_mode = cyphes_core::PermissionMode::Default;
         }
         config.project_dir = Some(working_dir.clone());
 
@@ -54,14 +54,14 @@ impl AgentRuntime {
             (String::new(), false)
         };
 
-        let client_config = claurst_api::client::ClientConfig {
+        let client_config = cyphes_api::client::ClientConfig {
             api_key: api_key.clone(),
             api_base: config.resolve_anthropic_api_base(),
             use_bearer_auth,
             ..Default::default()
         };
-        let api_client = Arc::new(claurst_api::AnthropicClient::new(client_config.clone())?);
-        let provider_registry = Arc::new(claurst_api::ProviderRegistry::from_config(
+        let api_client = Arc::new(cyphes_api::AnthropicClient::new(client_config.clone())?);
+        let provider_registry = Arc::new(cyphes_api::ProviderRegistry::from_config(
             &config,
             client_config,
         ));
@@ -83,8 +83,8 @@ impl AgentRuntime {
         // attached here — the wrapper type lives in the CLI crate today and
         // adding it would create a circular dep. Built-in tools (Bash, Read,
         // Edit, Glob, Grep, WebFetch, …) cover the common ACP-editor flows.
-        let mut tools: Vec<Box<dyn Tool>> = claurst_tools::all_tools();
-        tools.push(Box::new(claurst_query::AgentTool));
+        let mut tools: Vec<Box<dyn Tool>> = cyphes_tools::all_tools();
+        tools.push(Box::new(cyphes_query::AgentTool));
         let tools = Arc::new(tools);
 
         let mut query_config = QueryConfig::from_config(&config);
@@ -106,11 +106,11 @@ impl AgentRuntime {
     }
 }
 
-async fn build_mcp_manager(config: &Config) -> Option<Arc<claurst_mcp::McpManager>> {
+async fn build_mcp_manager(config: &Config) -> Option<Arc<cyphes_mcp::McpManager>> {
     if config.mcp_servers.is_empty() {
         return None;
     }
-    let mgr = Arc::new(claurst_mcp::McpManager::connect_all(&config.mcp_servers).await);
+    let mgr = Arc::new(cyphes_mcp::McpManager::connect_all(&config.mcp_servers).await);
     mgr.clone().spawn_notification_poll_loop();
     Some(mgr)
 }

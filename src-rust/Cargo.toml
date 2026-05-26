@@ -18,7 +18,7 @@ members = [
 [workspace.package]
 version = "0.1.4"
 edition = "2021"
-authors = ["Claurst"]
+authors = ["CYPHES"]
 license = "GPL-3.0"
 
 [workspace.dependencies]
@@ -100,14 +100,14 @@ tokio-tungstenite = { version = "0.24", features = ["native-tls-vendored"] }
 schemars = { version = "0.8", features = ["derive"] }
 
 # Workspace crates
-claurst-core = { path = "crates/core" }
-claurst-acp = { path = "crates/acp" }
-claurst-api = { path = "crates/api" }
-claurst-tools = { path = "crates/tools" }
-claurst-query = { path = "crates/query" }
-claurst-tui = { path = "crates/tui" }
-claurst-commands = { path = "crates/commands" }
-claurst-mcp = { path = "crates/mcp" }
-claurst-bridge = { path = "crates/bridge" }
-claurst-buddy = { path = "crates/buddy" }
-claurst-plugins = { path = "crates/plugins" }
+cyphes-core = { path = "crates/core" }
+cyphes-acp = { path = "crates/acp" }
+cyphes-api = { path = "crates/api" }
+cyphes-tools = { path = "crates/tools" }
+cyphes-query = { path = "crates/query" }
+cyphes-tui = { path = "crates/tui" }
+cyphes-commands = { path = "crates/commands" }
+cyphes-mcp = { path = "crates/mcp" }
+cyphes-bridge = { path = "crates/bridge" }
+cyphes-buddy = { path = "crates/buddy" }
+cyphes-plugins = { path = "crates/plugins" }
