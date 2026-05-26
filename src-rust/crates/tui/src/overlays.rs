@@ -12,12 +12,12 @@ use ratatui::widgets::{Block, Borders, Clear, Paragraph, Widget};
 use ratatui::Frame;
 use unicode_width::UnicodeWidthStr;
 
-pub const CLAURST_ACCENT: Color = Color::Rgb(233, 30, 99);
-pub const CLAURST_PANEL_BG: Color = Color::Rgb(20, 20, 28);
-pub const CLAURST_PANEL_BORDER: Color = Color::Rgb(72, 72, 80);
-pub const CLAURST_TEXT: Color = Color::Rgb(235, 235, 240);
-pub const CLAURST_MUTED: Color = Color::Rgb(110, 110, 118);
-pub const CLAURST_OVERLAY_BG: Color = Color::Rgb(10, 10, 14);
+pub const CLAURST_ACCENT: Color = Color::Rgb(0, 246, 255);
+pub const CLAURST_PANEL_BG: Color = Color::Rgb(6, 9, 9);
+pub const CLAURST_PANEL_BORDER: Color = Color::Rgb(52, 82, 84);
+pub const CLAURST_TEXT: Color = Color::Rgb(245, 251, 250);
+pub const CLAURST_MUTED: Color = Color::Rgb(116, 144, 144);
+pub const CLAURST_OVERLAY_BG: Color = Color::Rgb(2, 3, 3);
 
 // ---------------------------------------------------------------------------
 // Geometry helper (shared)

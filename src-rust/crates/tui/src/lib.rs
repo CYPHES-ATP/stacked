@@ -268,7 +268,7 @@ pub fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<Stdout>>> {
         );
     }
 
-    set_terminal_title("\u{1f980} Claurst");
+    set_terminal_title("Stacked");
     let backend = CrosstermBackend::new(stdout);
     let terminal = Terminal::new(backend)?;
     Ok(terminal)
@@ -293,11 +293,11 @@ pub fn set_terminal_title(title: &str) {
 }
 
 /// Update the terminal title to reflect the current session context.
-/// Format: "🦀 | <topic>" or just "🦀 Claurst" when no topic is set.
+/// Format: "Stacked | <topic>" or just "Stacked" when no topic is set.
 pub fn update_terminal_title(topic: Option<&str>) {
     match topic {
-        Some(t) if !t.is_empty() => set_terminal_title(&format!("\u{1f980} | {}", t)),
-        _ => set_terminal_title("\u{1f980} Claurst"),
+        Some(t) if !t.is_empty() => set_terminal_title(&format!("Stacked | {}", t)),
+        _ => set_terminal_title("Stacked"),
     }
 }
 
@@ -754,7 +754,7 @@ mod tests {
             .collect::<Vec<_>>()
             .join("");
 
-        assert!(rendered.contains("Claurst"));
+        assert!(rendered.contains("Stacked"));
         assert!(rendered.contains("hello"));
     }
 
@@ -836,7 +836,7 @@ mod tests {
     }
 
     #[test]
-    fn test_render_app_hides_shortcuts_hint_when_prompt_has_text() {
+    fn test_render_app_keeps_shortcuts_hint_in_status_when_prompt_has_text() {
         let backend = TestBackend::new(120, 30);
         let mut terminal = Terminal::new(backend).unwrap();
         let mut app = make_app();
@@ -855,7 +855,7 @@ mod tests {
             .collect::<Vec<_>>()
             .join("");
 
-        assert!(!rendered.contains("? shortcuts"));
+        assert!(rendered.contains("? shortcuts"));
     }
 
     #[test]
@@ -1309,6 +1309,9 @@ mod tests {
         let mut terminal = Terminal::new(backend).unwrap();
         let mut app = make_app();
         app.push_message(claurst_core::types::Message::user("hello".to_string()));
+        if let Some(meta) = app.turn_metadata.get_mut(0) {
+            meta.interrupted = true;
+        }
         app.push_message(claurst_core::types::Message::assistant("hi there".to_string()));
 
         terminal

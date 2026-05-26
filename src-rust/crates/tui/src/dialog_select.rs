@@ -195,9 +195,9 @@ pub fn render_dialog_select(frame: &mut Frame, state: &DialogSelectState, area: 
 
     let dim = Color::Rgb(90, 90, 90);
     let dialog_bg = CLAURST_PANEL_BG;
-    let highlight_bg = Color::Rgb(233, 30, 99); // pink highlight bar
+    let highlight_bg = Color::Rgb(0, 246, 255); // CYPHES highlight bar
     let highlight_fg = Color::White;
-    let category_fg = Color::Rgb(233, 30, 99); // pink category names
+    let category_fg = Color::Rgb(0, 246, 255); // CYPHES category names
 
     // ── Darken the entire background ──
     render_dark_overlay(frame, area);

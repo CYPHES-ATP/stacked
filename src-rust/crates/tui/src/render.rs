@@ -70,7 +70,7 @@ const SPINNER: &[char] = &['\u{00b7}', '\u{2722}', '*', '\u{2736}', '\u{273b}', 
 #[cfg(not(target_os = "windows"))]
 const SPINNER: &[char] = &['\u{00b7}', '\u{2722}', '\u{2733}', '\u{2736}', '\u{273b}', '\u{273d}',
                             '\u{273d}', '\u{273b}', '\u{2736}', '\u{2733}', '\u{2722}', '\u{00b7}'];
-const CLAUDE_ORANGE: Color = Color::Rgb(233, 30, 99);
+const CLAUDE_ORANGE: Color = Color::Rgb(0, 246, 255);
 const WELCOME_BOX_HEIGHT: u16 = 9;
 const STATUS_THINKING: &str = "thinking";
 const STATUS_THINKING_ELLIPSIS: &str = "thinking\u{2026}";
@@ -1461,7 +1461,7 @@ fn render_welcome_box(frame: &mut Frame, app: &App, area: Rect) {
     if area.height < box_height || box_width < 30 {
         // Too small: fall back to a single line
         let line = Line::from(vec![
-            Span::styled("Claurst ", Style::default().fg(CLAUDE_ORANGE).add_modifier(Modifier::BOLD)),
+            Span::styled("Stacked ", Style::default().fg(CLAUDE_ORANGE).add_modifier(Modifier::BOLD)),
             Span::styled(format!("v{}", APP_VERSION), Style::default().fg(Color::DarkGray)),
         ]);
         frame.render_widget(Paragraph::new(vec![line]), area);
@@ -1469,14 +1469,14 @@ fn render_welcome_box(frame: &mut Frame, app: &App, area: Rect) {
     }
     let box_area = Rect { x: area.x, y: area.y, width: box_width, height: box_height };
 
-    // Outer border with title "Claurst vX.Y"
+    // Outer border with title "Stacked vX.Y"
     let accent = app.accent_color;
     let outer_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(accent))
         .title(Line::from(vec![
-            Span::styled(" Claurst ", Style::default().fg(accent).add_modifier(Modifier::BOLD)),
+            Span::styled(" Stacked ", Style::default().fg(accent).add_modifier(Modifier::BOLD)),
             Span::styled(format!("v{} ", APP_VERSION), Style::default().fg(Color::DarkGray)),
         ]));
     frame.render_widget(outer_block, box_area);
@@ -1541,7 +1541,7 @@ fn render_welcome_box(frame: &mut Frame, app: &App, area: Rect) {
     // --- Right column ---
     let tip_text = claurst_core::tips::select_tip(0)
         .map(|t| t.content.to_string())
-        .unwrap_or_else(|| "Edit AGENTS.md to add instructions for Claurst".to_string());
+        .unwrap_or_else(|| "Edit AGENTS.md to add instructions for Stacked".to_string());
 
     let mut right_lines: Vec<Line> = Vec::new();
     right_lines.push(Line::from(Span::styled(
@@ -2911,7 +2911,7 @@ pub fn render_coordinator_status_lines(
 
 /// Render a single header line for a teammate's message block.
 ///
-/// Format: `┤ teammate: <id> ├` in magenta, optional `· <session_info>` in dim
+/// Format: `┤ teammate: <id> ├` in the active accent, optional `· <session_info>` in dim
 ///
 /// # Arguments
 /// * `teammate_id`  — teammate identifier string

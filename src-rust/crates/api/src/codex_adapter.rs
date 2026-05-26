@@ -182,7 +182,8 @@ mod tests {
         // Verify structure
         assert_eq!(openai_req["model"], "gpt-5.2-codex");
         assert_eq!(openai_req["max_tokens"], 1024);
-        assert_eq!(openai_req["temperature"], 0.7);
+        let temperature = openai_req["temperature"].as_f64().unwrap();
+        assert!((temperature - 0.7).abs() < 1e-6);
         assert!(openai_req["messages"].is_array());
 
         let messages = openai_req["messages"].as_array().unwrap();

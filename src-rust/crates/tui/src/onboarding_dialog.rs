@@ -113,8 +113,8 @@ pub fn render_onboarding_dialog(
 }
 
 fn render_provider_setup_page(frame: &mut Frame, area: Rect) {
-    // Theme pink — matches the header and mascot
-    let pink = Color::Rgb(233, 30, 99);
+    // Theme accent — matches the header and mascot
+    let pink = Color::Rgb(0, 246, 255);
     let dim = Color::Rgb(100, 100, 100);
 
     let block = Block::default()
@@ -226,7 +226,7 @@ fn render_provider_setup_page(frame: &mut Frame, area: Rect) {
 fn render_welcome_page(frame: &mut Frame, area: Rect) {
     use crate::overlays::{render_dark_overlay, render_dialog_bg, CLAURST_PANEL_BG};
 
-    let pink = Color::Rgb(233, 30, 99);
+    let pink = Color::Rgb(0, 246, 255);
     let dim = Color::Rgb(90, 90, 90);
     let text = Color::Rgb(210, 210, 215);
 
@@ -256,7 +256,7 @@ fn render_welcome_page(frame: &mut Frame, area: Rect) {
     let lines: Vec<Line<'static>> = vec![
         Line::from(vec![
             Span::styled(
-                " Welcome to Claurst",
+                " Welcome to Stacked",
                 Style::default().fg(Color::White).add_modifier(Modifier::BOLD),
             ),
             Span::styled(
@@ -266,7 +266,7 @@ fn render_welcome_page(frame: &mut Frame, area: Rect) {
         ]),
         Line::from(""),
         Line::from(Span::styled(
-            "  Claurst is an AI-powered coding assistant in your terminal.",
+            "  Stacked is the CYPHES coding assistant in your terminal.",
             Style::default().fg(text),
         )),
         Line::from(""),
@@ -275,8 +275,8 @@ fn render_welcome_page(frame: &mut Frame, area: Rect) {
             Style::default().fg(pink).add_modifier(Modifier::BOLD),
         )),
         Line::from(Span::styled("  Type your request and press Enter to send it.", Style::default().fg(text))),
-        Line::from(Span::styled("  Claurst can read, edit, and create files in your project.", Style::default().fg(text))),
-        Line::from(Span::styled("  Claurst can run bash commands, search the web, and more.", Style::default().fg(text))),
+        Line::from(Span::styled("  Stacked can read, edit, and create files in your project.", Style::default().fg(text))),
+        Line::from(Span::styled("  Stacked can run bash commands, search the web, and more.", Style::default().fg(text))),
         Line::from(""),
         Line::from(Span::styled(
             "  Slash commands:",
@@ -303,7 +303,7 @@ fn render_welcome_page(frame: &mut Frame, area: Rect) {
 fn render_keybindings_page(frame: &mut Frame, area: Rect) {
     use crate::overlays::{render_dark_overlay, render_dialog_bg, CLAURST_PANEL_BG};
 
-    let pink = Color::Rgb(233, 30, 99);
+    let pink = Color::Rgb(0, 246, 255);
     let dim = Color::Rgb(90, 90, 90);
     let text = Color::Rgb(210, 210, 215);
 
@@ -387,7 +387,7 @@ mod tests {
     fn onboarding_defaults_hidden() {
         let state = OnboardingDialogState::new();
         assert!(!state.visible);
-        assert_eq!(state.page, OnboardingPage::Welcome);
+        assert_eq!(state.page, OnboardingPage::ProviderSetup);
     }
 
     #[test]
@@ -429,7 +429,7 @@ mod tests {
         let content: String = terminal.backend().buffer().clone().content().iter()
             .map(|c| c.symbol().chars().next().unwrap_or(' '))
             .collect();
-        assert!(content.contains("Welcome") || content.contains("Claurst"));
+        assert!(content.contains("Welcome") || content.contains("Stacked"));
     }
 
     #[test]

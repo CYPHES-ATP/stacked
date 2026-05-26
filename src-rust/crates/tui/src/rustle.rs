@@ -26,17 +26,17 @@ pub enum RustlePose {
     Loading { frame: u64 },
 }
 
-/// Body-part style: bold pink foreground (#e91e63).
+/// Body-part style: bold CYPHES cyan foreground.
 fn body_style() -> Style {
     Style::default()
-        .fg(Color::Rgb(233, 30, 99))
+        .fg(Color::Rgb(0, 246, 255))
         .add_modifier(Modifier::BOLD)
 }
 
-/// Eye-row style: pink text on black background.
+/// Eye-row style: CYPHES cyan text on black background.
 fn eye_bg_style() -> Style {
     Style::default()
-        .fg(Color::Rgb(233, 30, 99))
+        .fg(Color::Rgb(0, 246, 255))
         .bg(Color::Black)
         .add_modifier(Modifier::BOLD)
 }
@@ -50,7 +50,7 @@ fn eyeball_style() -> Style {
 }
 
 /// Build spans for the eye section, giving ▘/▝ eyeball characters white
-/// foreground and everything else pink-on-black.
+/// foreground and everything else cyan-on-black.
 fn eye_spans(s: &'static str) -> Vec<Span<'static>> {
     let mut spans: Vec<Span<'static>> = Vec::new();
     let mut buf = String::new();

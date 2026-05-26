@@ -57,7 +57,7 @@ const PROMPT_SLASH_COMMANDS: &[(&str, &str)] = &[
     ("diff", "Inspect the current git diff"),
     ("doctor", "Run diagnostics"),
     ("effort", "Set effort level (low/medium/high/max)"),
-    ("exit", "Quit Claurst"),
+    ("exit", "Quit Stacked"),
     ("export", "Export conversation"),
     ("fast", "Toggle fast mode"),
     ("feedback", "Open session feedback survey"),
@@ -69,11 +69,11 @@ const PROMPT_SLASH_COMMANDS: &[(&str, &str)] = &[
     ("import-config", "Import CLAUDE.md and settings.json from ~/.claude"),
     ("init", "Initialize AGENTS.md for this project"),
     ("insights", "Generate a session analysis report with conversation statistics"),
-    ("install-slack-app", "Install the Claurst Slack integration"),
+    ("install-slack-app", "Install the Stacked Slack integration"),
     ("keybindings", "Show keybinding configuration"),
     ("links", "Open URLs from this session in your browser"),
-    ("login", "Log in to Claurst"),
-    ("logout", "Log out of Claurst"),
+    ("login", "Log in to Stacked"),
+    ("logout", "Log out of Stacked"),
     ("managed-agents", "Configure manager-executor managed agent system"),
     ("mcp", "Browse configured MCP servers"),
     ("memory", "Browse and open AGENTS.md memory files"),
@@ -84,7 +84,7 @@ const PROMPT_SLASH_COMMANDS: &[(&str, &str)] = &[
     ("caveman", "Caveman speech mode — save big token"),
     ("rocky", "Rocky speech mode — amaze amaze amaze"),
     ("normal", "Deactivate speech mode"),
-    ("quit", "Exit Claurst"),
+    ("quit", "Exit Stacked"),
     ("refresh", "Clear saved provider auth and model caches"),
     ("rename", "Rename this session"),
     ("resume", "Resume a previous session"),
@@ -741,7 +741,7 @@ pub struct App {
     /// Current agent mode name: "build", "plan", "explore", etc.
     pub agent_mode: Option<String>,
     /// Accent color derived from the current agent mode.
-    /// Build = pink, Plan = blue, Explore = amber.
+    /// Build = CYPHES cyan, Plan = blue, Explore = amber.
     pub accent_color: Color,
     /// Set by `cycle_agent_mode` so the main loop can update the query config
     /// and tool list to match the newly-selected agent.
@@ -942,8 +942,8 @@ pub struct App {
     pub import_config_dialog: ImportConfigDialogState,
     /// Ctrl+K command palette overlay.
     pub command_palette: DialogSelectState,
-    /// Whether Claurst was launched from the user's home directory.
-    /// Shown as a startup notice: "Note: You have launched Claurst in your home directory…"
+    /// Whether Stacked was launched from the user's home directory.
+    /// Shown as a startup notice: "Note: You have launched Stacked in your home directory..."
     pub home_dir_warning: bool,
     /// Output style: "auto" | "stream" | "verbose".
     pub output_style: String,
@@ -1161,8 +1161,8 @@ Move immutable borrow out of scope first, then take mutable. Good good good afte
     }
 }
 
-/// Accent color for build mode (default pink).
-pub const ACCENT_BUILD: Color = Color::Rgb(233, 30, 99);
+/// Accent color for build mode (CYPHES cyan).
+pub const ACCENT_BUILD: Color = Color::Rgb(0, 246, 255);
 /// Accent color for plan mode (blue).
 pub const ACCENT_PLAN: Color = Color::Rgb(66, 135, 245);
 /// Accent color for explore mode (amber).
@@ -2083,11 +2083,11 @@ impl App {
                     PermissionMode::Default
                 };
                 self.status_message = Some(if self.plan_mode {
-                    "Plan mode ON — Claurst will plan before acting.".to_string()
+                    "Plan mode ON - Stacked will plan before acting.".to_string()
                 } else {
                     "Plan mode OFF.".to_string()
                 });
-                // Allow CLI path to also run (sends UserMessage to Claurst).
+                // Allow CLI path to also run (sends UserMessage to Stacked).
                 false
             }
             "compact" => {
@@ -6656,12 +6656,15 @@ mod tests {
     }
 
     #[test]
-    fn test_ctrl_a_shortcut_opens_model_picker() {
+    fn test_ctrl_shift_a_shortcut_opens_model_picker() {
         let mut app = make_app();
         app.has_credentials = true;
         app.config.provider = Some("anthropic".to_string());
 
-        app.handle_key_event(press_key(KeyCode::Char('a'), KeyModifiers::CONTROL));
+        app.handle_key_event(press_key(
+            KeyCode::Char('a'),
+            KeyModifiers::CONTROL | KeyModifiers::SHIFT,
+        ));
 
         assert!(app.model_picker.visible);
     }

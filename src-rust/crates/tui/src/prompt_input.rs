@@ -17,7 +17,7 @@ use ratatui::{
     widgets::{Paragraph, Widget},
 };
 
-const CLAUDE_ORANGE: Color = Color::Rgb(233, 30, 99);
+const CLAUDE_ORANGE: Color = Color::Rgb(0, 246, 255);
 const PROMPT_POINTER: &str = "\u{276f}";
 
 // ---------------------------------------------------------------------------
@@ -2904,7 +2904,7 @@ pub fn render_prompt_input(
     }
 
     let accent = match mode {
-        InputMode::Readonly => CLAUDE_ORANGE,   // locked while streaming — always pink
+        InputMode::Readonly => CLAUDE_ORANGE,   // locked while streaming
         _ => accent_override,                   // use mode-aware accent color
     };
     let prompt_prefix = format!("{PROMPT_POINTER} ");

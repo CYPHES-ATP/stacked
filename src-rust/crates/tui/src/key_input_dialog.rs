@@ -95,7 +95,7 @@ pub fn render_key_input_dialog(
         return;
     }
 
-    let pink = Color::Rgb(233, 30, 99);
+    let pink = Color::Rgb(0, 246, 255);
     let dim = Color::Rgb(90, 90, 90);
     let dialog_bg = CLAURST_PANEL_BG;
 

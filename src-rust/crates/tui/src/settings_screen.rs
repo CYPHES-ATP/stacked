@@ -461,7 +461,7 @@ pub fn render_settings_screen(frame: &mut Frame, screen: &SettingsScreen, area: 
     // Header
     let title = Line::from(vec![
         Span::styled(" Settings", Style::default().fg(CLAURST_ACCENT).add_modifier(Modifier::BOLD)),
-        Span::styled(" — Claurst", Style::default().fg(CLAURST_MUTED)),
+        Span::styled(" - Stacked", Style::default().fg(CLAURST_MUTED)),
         Span::styled(
             format!("{:>width$}", "Esc close", width = inner.width.saturating_sub(19) as usize),
             Style::default().fg(CLAURST_MUTED),

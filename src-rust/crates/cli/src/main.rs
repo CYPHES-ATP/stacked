@@ -115,7 +115,7 @@ impl Tool for McpToolWrapper {
 #[command(
     name = "claurst",
     version = APP_VERSION,
-    about = "Claurst - AI-powered coding assistant",
+    about = "Stacked - CYPHES coding assistant",
     long_about = None,
 )]
 struct Cli {
@@ -368,7 +368,7 @@ async fn main() -> anyhow::Result<()> {
     // Fast-path: handle --version before parsing everything
     let raw_args: Vec<String> = std::env::args().collect();
     if raw_args.iter().any(|a| a == "--version" || a == "-V") {
-        println!("claurst {}", APP_VERSION);
+        println!("stacked {}", APP_VERSION);
         return Ok(());
     }
 

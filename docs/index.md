@@ -1,33 +1,33 @@
 <div align="center">
 
-# Claurst
+# Stacked
 
-<img src="../public/Ship.png" alt="Rustle on the ship" width="350" />
+<img src="../public/cyphes-mark.svg" alt="CYPHES mark" width="180" />
 
-Claurst is a high-performance Rust reimplementation of Claude Code — a terminal-native AI coding agent with streaming responses, 40+ built-in tools, 15+ LLM provider integrations, a full ratatui TUI, and an extensible plugin system.
+Stacked is the CYPHES-branded Phase 1 fork of Claurst: a terminal-native coding-agent runtime wrapped in a visual language built around approvals, contracts, and receipts.
 
-**Version:** 0.1.4 (Beta) · **License:** GPL-3.0 · [GitHub](https://github.com/Kuberwastaken/claurst)
+**Version:** 0.1.4 Phase 1 fork · **License:** GPL-3.0 · [GitHub](https://github.com/CYPHES-ATP/stacked)
 
 </div>
 
 ---
 
-## What Claurst does
+## What Stacked does
 
-You give Claurst a task in natural language. It plans, reads and writes files, runs shell commands, searches the web, and iterates — all inside your terminal, with every step visible in real time.
+You give Stacked a task in natural language. It plans, reads and writes files, runs shell commands, searches the web, and iterates inside your terminal with every step visible in real time.
 
 ```
 $ claurst "add input validation to the signup form"
 ```
 
-Claurst reads your codebase, implements the change across multiple files, runs your tests, and reports back — without you leaving the terminal.
+Stacked reads your codebase, implements the change across multiple files, runs your tests, and reports back without you leaving the terminal.
 
 ---
 
 ## Key capabilities
 
 ### Agentic loop
-Claurst runs a multi-turn loop: it streams a response from the model, executes any tool calls (file read, bash, web search, …), feeds the results back, and continues until the task is done or the turn limit is reached.
+Stacked runs a multi-turn loop inherited from Claurst: it streams a response from the model, executes any tool calls, feeds the results back, and continues until the task is done or the turn limit is reached.
 
 ### 40+ built-in tools
 - **File operations** — read, write, edit, patch, batch-edit
@@ -41,23 +41,23 @@ Claurst runs a multi-turn loop: it streams a response from the model, executes a
 ### 15+ LLM providers
 Anthropic Claude (default), OpenAI, Google Gemini, AWS Bedrock, Azure OpenAI, Ollama, Groq, Mistral, DeepSeek, xAI, Cohere, OpenRouter, Together AI, Perplexity, GitHub Copilot, Cerebras, LM Studio, and LLaMA.cpp.
 
-### AMOLED terminal UI
+### CYPHES terminal UI
 A ratatui-based TUI with real-time streaming, syntax-highlighted code blocks, diff viewer, permission dialogs, slash command autocomplete, session browser, and a full keybinding system.
 
 ### Multi-account credentials
-Store multiple named Anthropic (Claude.ai / Console) and Codex (ChatGPT) accounts in one install and switch between them instantly with `/switch` or `claurst auth switch <id>`. Identity is detected from the OAuth JWT, so re-logging-in the same account is idempotent. See [Authentication](auth#multi-account-profiles).
+Store multiple named Anthropic, OpenAI/Codex, and other provider accounts in one install and switch between them instantly with `/switch` or `claurst auth switch <id>`. Identity is detected from the OAuth JWT when available, so re-logging-in the same account is idempotent. See [Authentication](auth#multi-account-profiles).
 
 ### @file injection
 Type `@path/to/file` anywhere in a prompt to inject the file's contents inline. Typeahead autocomplete suggests paths as you type, with size/binary safety checks before submit. See [@file Injection](keybindings#file-injection-with-typeahead).
 
 ### Plugin system
-Extend Claurst with TOML-manifest plugins that add custom slash commands, MCP servers, hooks, output styles, and tool overlays.
+Extend Stacked with TOML-manifest plugins that add custom slash commands, MCP servers, hooks, output styles, and tool overlays.
 
 ### Multi-agent orchestration
 Run named agents (`build`, `plan`, `explore`) or spawn parallel sub-agents in coordinator mode. Agents communicate via a shared task registry and message channels.
 
 ### Goal system
-Set a durable objective with `/goal` and Claurst works autonomously across turns until the goal is verified complete — using the `GoalCompleteTool` for audited completion rather than just stopping.
+Set a durable objective with `/goal` and Stacked works autonomously across turns until the goal is verified complete, using the `GoalCompleteTool` for audited completion rather than just stopping.
 
 ### Managed agents (preview)
 Configure a manager-executor architecture with `/managed-agents` where a manager model delegates subtasks to parallel executor agents with full budget split controls.
@@ -73,19 +73,19 @@ Activate `/caveman` or `/rocky` to compress model responses by 40–85%, saving 
 
 ```bash
 # Linux / macOS
-curl -fsSL https://github.com/Kuberwastaken/claurst/releases/latest/download/install.sh | bash
+git clone https://github.com/CYPHES-ATP/stacked
+cd stacked/src-rust
+cargo run -- --print "explain this repo"
 ```
 
 ```powershell
 # Windows (PowerShell)
-irm https://github.com/Kuberwastaken/claurst/releases/latest/download/install.ps1 | iex
+cargo run -- --print "explain this repo"
 ```
 
-The installer auto-detects your platform/arch, drops `claurst` into
-`~/.claurst/bin/`, and adds it to your `PATH`. See
-[Installation](installation) for flags, manual download, and uninstall steps.
+Phase 1 uses local source builds while release automation is audited. The runtime binary and config paths still use upstream Claurst names until the command/package naming plan is accepted.
 
-**2. Set your API key**
+**2. Set your provider key**
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -107,7 +107,7 @@ claurst --print "explain the auth module"
 
 ## Configuration
 
-Claurst reads `~/.claurst/settings.json` at startup. The most common settings:
+The current runtime reads `~/.claurst/settings.json` at startup. The most common settings:
 
 ```json
 {

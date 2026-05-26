@@ -46,20 +46,20 @@ impl ColorPalette {
         }
     }
 
-    /// Default Claurst theme
+    /// Default Stacked/CYPHES theme
     fn default_theme() -> Self {
         Self {
-            error: Color::Rgb(255, 87, 51),        // Bright red-orange
-            success: Color::Rgb(76, 175, 80),      // Green
-            warning: Color::Rgb(255, 152, 0),      // Orange
-            info: Color::Cyan,
-            action: Color::Cyan,
-            disabled: Color::DarkGray,
-            accent: Color::Cyan,
-            secondary_accent: Color::Rgb(233, 30, 99), // Magenta
-            text_light: Color::White,
+            error: Color::Rgb(255, 112, 67),       // CYPHES orange
+            success: Color::Rgb(199, 255, 71),     // CYPHES green
+            warning: Color::Rgb(255, 184, 77),     // Warm caution
+            info: Color::Rgb(0, 246, 255),         // CYPHES cyan
+            action: Color::Rgb(0, 246, 255),
+            disabled: Color::Rgb(116, 144, 144),
+            accent: Color::Rgb(0, 246, 255),
+            secondary_accent: Color::Rgb(99, 255, 245),
+            text_light: Color::Rgb(245, 251, 250),
             text_dark: Color::Black,
-            border: Color::DarkGray,
+            border: Color::Rgb(52, 82, 84),
         }
     }
 

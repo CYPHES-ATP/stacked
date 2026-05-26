@@ -715,16 +715,16 @@ mod tests {
     }
 
     #[test]
-    fn test_default_bindings_contains_ctrl_c() {
+    fn test_default_bindings_contains_ctrl_l() {
         let bindings = default_bindings();
-        let ctrl_c = bindings.iter().find(|b| {
+        let ctrl_l = bindings.iter().find(|b| {
             b.chord.len() == 1
                 && b.chord[0].ctrl
-                && b.chord[0].key == "c"
+                && b.chord[0].key == "l"
                 && b.context == KeyContext::Global
         });
-        assert!(ctrl_c.is_some());
-        assert_eq!(ctrl_c.unwrap().action.as_deref(), Some("interrupt"));
+        assert!(ctrl_l.is_some());
+        assert_eq!(ctrl_l.unwrap().action.as_deref(), Some("redraw"));
     }
 
     #[test]
@@ -756,9 +756,9 @@ mod tests {
     fn test_resolver_simple_action() {
         let user = UserKeybindings::default();
         let mut resolver = KeybindingResolver::new(&user);
-        let ks = parse_keystroke("ctrl+c").unwrap();
+        let ks = parse_keystroke("ctrl+l").unwrap();
         let result = resolver.process(ks, &KeyContext::Global);
-        assert!(matches!(result, KeybindingResult::Action(ref a) if a == "interrupt"));
+        assert!(matches!(result, KeybindingResult::Action(ref a) if a == "redraw"));
     }
 
     #[test]

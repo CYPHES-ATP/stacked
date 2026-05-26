@@ -1,26 +1,27 @@
 {
   "name": "claurst",
   "version": "0.1.4",
-  "description": "Open-source, multi-provider terminal coding agent built in Rust",
+  "description": "CYPHES Phase 1 fork of an open-source Rust coding-agent runtime",
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Kuberwastaken/claurst.git"
+    "url": "git+https://github.com/CYPHES-ATP/stacked.git"
   },
-  "homepage": "https://claurst.kuber.studio",
+  "homepage": "https://github.com/CYPHES-ATP/stacked",
   "bugs": {
-    "url": "https://github.com/kuberwastaken/claurst/issues"
+    "url": "https://github.com/CYPHES-ATP/stacked/issues"
   },
   "keywords": [
     "ai",
     "coding-agent",
-    "claude",
-    "anthropic",
+    "cyphes",
+    "stacked",
+    "agent-transfer-protocol",
     "terminal",
     "tui",
     "rust"
   ],
-  "author": "Kuber Mehta",
+  "author": "CYPHES",
   "bin": {
     "claurst": "bin/claurst"
   },

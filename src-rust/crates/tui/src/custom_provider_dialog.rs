@@ -108,7 +108,7 @@ pub fn render_custom_provider_dialog(
         return;
     }
 
-    let pink = Color::Rgb(233, 30, 99);
+    let pink = Color::Rgb(0, 246, 255);
     let dim = Color::Rgb(90, 90, 90);
     let muted = Color::Rgb(180, 180, 180);
     let dialog_bg = CLAURST_PANEL_BG;
